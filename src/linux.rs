@@ -12,6 +12,9 @@ pub fn run(config: &Config) -> Result<()> {
         .name("cec2xdo")?
         .event(uinput::event::Keyboard::All)?
         .create()?;
+    // vendor_id and product_id are for macos only.
+    let _vendor_id = config.vendor_id.clone();
+    let _product_id = config.product_id.clone();
 
     let cec = CecDevice::open("/dev/cec0")?;
     cec.set_mode(CecModeInitiator::None, CecModeFollower::Monitor)?;

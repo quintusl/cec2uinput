@@ -24,6 +24,8 @@ pub fn run(config: &Config) -> Result<()> {
     let api = HidApi::new()?;
     // TODO: Make Vendor ID and Product ID configurable
     let device = api.open(config.vendor_id, config.product_id)?;
+    // mappings is for Linux only.
+    let _mappings = config.mappings.clone();
 
     loop {
         let mut msg = CecMessage { opcode: 0, num_params: 0, params: [0; 16] };

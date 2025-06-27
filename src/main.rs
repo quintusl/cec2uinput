@@ -13,8 +13,8 @@ use std::collections::HashMap;
 
 #[derive(Debug, Deserialize)]
 struct Config {
-    _vendor_id: u16,
-    _product_id: u16,
+    vendor_id: u16,
+    product_id: u16,
     mappings: HashMap<String, String>,
 }
 
