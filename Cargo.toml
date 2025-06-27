@@ -1,0 +1,21 @@
+[package]
+name = "cec2uinput"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+anyhow = "1.0"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+cec_linux = { version = "0.2.0", features = ["poll"] }
+uinput = "0.1"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+hidapi = "2.5.0"
+
+[build-dependencies]
+cc = "1.0"
+pkg-config = "0.3"
+

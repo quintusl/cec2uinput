@@ -1,0 +1,11 @@
+[Unit]
+Description=CEC to xdo
+
+[Service]
+ExecStart=/usr/local/bin/cec2uinput
+User=root
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
