@@ -1,18 +1,18 @@
-'''
 #[cfg(target_os = "linux")]
 mod linux;
 
-#[cfg(target_os = "macos")]
-mod macos;
+
 
 use anyhow::Result;
+
+#[cfg(target_os = "linux")]
 use cec::{Cec, CecConfiguration, CecLogMessage, CecLogLevel, CecMessage, CecOpCode, CecUserControlCode, Keypress};
+
 use serde::Deserialize;
 use serde_yaml;
 use std::collections::HashMap;
 use std::fs::File;
 use std::sync::mpsc;
-use std::thread;
 
 #[derive(Debug, Deserialize)]
 struct Config {
@@ -22,6 +22,7 @@ struct Config {
     mappings: HashMap<String, String>,
 }
 
+#[cfg(target_os = "linux")]
 fn main() -> Result<()> {
     let config = load_config("config.yaml")?;
 
@@ -54,9 +55,6 @@ fn main() -> Result<()> {
     let mut device = {
         #[cfg(target_os = "linux")]
         { linux::UInputDevice::new(&config)? }
-
-        #[cfg(target_os = "macos")]
-        { macos::HidDevice::new(&config)? }
     };
 
     loop {
@@ -90,9 +88,14 @@ fn main() -> Result<()> {
     }
 }
 
+#[cfg(not(target_os = "linux"))]
+fn main() -> Result<()> {
+    eprintln!("This application only supports Linux.");
+    Ok(())
+}
+
 fn load_config(path: &str) -> Result<Config> {
     let file = File::open(path)?;
     let config: Config = serde_yaml::from_reader(file)?;
     Ok(config)
 }
-'''

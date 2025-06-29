@@ -1,4 +1,3 @@
-'''
 use anyhow::Result;
 use uinput::event::keyboard;
 use crate::Config;
@@ -38,4 +37,3 @@ impl UInputDevice {
         Ok(())
     }
 }
-'''
