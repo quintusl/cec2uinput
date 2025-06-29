@@ -1,7 +1,6 @@
 use anyhow::Result;
-use cec_linux::{
-    CecDevice, CecEvent, CecModeFollower, CecModeInitiator, CecMsg, PollFlags, PollTimeout,
-};
+use cec::{Message, Cec};
+use cec::Keypress;
 
 use uinput::event::keyboard;
 
@@ -16,57 +15,37 @@ pub fn run(config: &Config) -> Result<()> {
     let _vendor_id = config.vendor_id.clone();
     let _product_id = config.product_id.clone();
 
-    let cec = CecDevice::open("/dev/cec0")?;
-    cec.set_mode(CecModeInitiator::None, CecModeFollower::Monitor)?;
+    let mut cec = Cec::new().open(None)?;
 
     loop {
-        let f = cec.poll(
-            PollFlags::POLLIN | PollFlags::POLLRDNORM | PollFlags::POLLPRI,
-            PollTimeout::NONE,
-        )?;
-
-        if f.intersects(PollFlags::POLLPRI) {
-            let evt: CecEvent = cec.get_event()?;
-            println!("evt {:?}", evt);
-        }
-        if f.contains(PollFlags::POLLIN | PollFlags::POLLRDNORM) {
-            let msg = cec.rec()?;
-
-            if msg.is_ok() {
-                if let Err(e) = handle_cec_msg(&msg, &config, &mut device) {
-                    eprintln!("Failed to handle CEC message: {}", e);
-                }
-            } else {
-                println!("msg {:x?}", msg);
+        if let Some(msg) = cec.receive() {
+            if let Err(e) = handle_cec_msg(&msg, &config, &mut device) {
+                eprintln!("Failed to handle CEC message: {}", e);
             }
         }
     }
 }
 
-fn handle_cec_msg(msg: &CecMsg, config: &Config, device: &mut uinput::Device) -> Result<()> {
-    if let Some(Ok(opcode)) = msg.opcode() {
-        if let cec_linux::CecOpcode::UserControlPressed = opcode {
-            if let Some(param) = msg.parameters().get(0) {
-                let key_name = match *param {
-                    0x00 => "Select",
-                    0x01 => "Up",
-                    0x02 => "Down",
-                    0x03 => "Left",
-                    0x04 => "Right",
-                    0x0d => "Enter",
-                    _ => {
-                        println!("Unknown key code: 0x{:02x}", param);
-                        return Ok(());
-                    }
-                };
+fn handle_cec_msg(msg: &Message, config: &Config, device: &mut uinput::Device) -> Result<()> {
+    if let Some(keypress) = msg.keypress() {
+        let key_name = match keypress {
+            Keypress::Select => "Select",
+            Keypress::Up => "Up",
+            Keypress::Down => "Down",
+            Keypress::Left => "Left",
+            Keypress::Right => "Right",
+            Keypress::Enter => "Enter",
+            _ => {
+                println!("Unknown key code: {:?}", keypress);
+                return Ok(());
+            }
+        };
 
-                if let Some(action) = config.mappings.get(key_name) {
-                    println!("action {:?}", action);
-                    if let Some(key) = map_action_to_key(action) {
-                        device.click(&key)?;
-                        device.synchronize()?;
-                    }
-                }
+        if let Some(action) = config.mappings.get(key_name) {
+            println!("action {:?}", action);
+            if let Some(key) = map_action_to_key(action) {
+                device.click(&key)?;
+                device.synchronize()?;
             }
         }
     }

@@ -9,7 +9,7 @@ serde_yaml = "0.9"
 anyhow = "1.0"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-cec_linux = { version = "0.2.0", features = ["poll"] }
+cec-rs = { version = "12.0.0" }
 uinput = "0.1"
 
 [target.'cfg(target_os = "macos")'.dependencies]
