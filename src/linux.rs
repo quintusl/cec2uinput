@@ -1,11 +1,16 @@
+#[cfg(target_os = "linux")]
 use anyhow::Result;
+#[cfg(target_os = "linux")]
 use uinput::event::keyboard;
+#[cfg(target_os = "linux")]
 use crate::Config;
 
+#[cfg(target_os = "linux")]
 pub struct UInputDevice {
     device: uinput::Device,
 }
 
+#[cfg(target_os = "linux")]
 impl UInputDevice {
     pub fn new(_config: &Config) -> Result<Self> {
         let device = uinput::default()?
