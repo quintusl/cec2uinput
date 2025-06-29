@@ -7,15 +7,11 @@ edition = "2021"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 anyhow = "1.0"
+cec-rs = "12.0.0"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-cec-rs = { version = "12.0.0" }
 uinput = "0.1"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 hidapi = "2.5.0"
-
-[build-dependencies]
-cc = "1.0"
-pkg-config = "0.3"
 
