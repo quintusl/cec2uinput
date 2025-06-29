@@ -5,3 +5,7 @@ mappings:
   Right: Right
   Select: Select
   Enter: Return
+  # Example mappings for other CEC events (these won't directly map to uinput events)
+  # Command_Play: Play
+  # Command_Pause: Pause
+  # Traffic_ActiveSource: ActiveSource

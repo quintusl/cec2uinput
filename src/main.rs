@@ -26,10 +26,10 @@ fn main() -> Result<()> {
 
     unsafe extern "C" fn cec_callback(
         cb_param: *mut ::std::os::raw::c_void,
-        msg: *const cec_log_message
+        event: *const cec_event
     ) -> ::std::os::raw::c_int {
-        let tx = &*(cb_param as *const std::sync::mpsc::Sender<cec_log_message>);
-        tx.send(*msg).unwrap();
+        let tx = &*(cb_param as *const std::sync::mpsc::Sender<cec_event>);
+        tx.send(*event).unwrap();
         0
     }
 
@@ -60,39 +60,41 @@ fn main() -> Result<()> {
     };
 
     loop {
-        if let Ok(msg) = rx.recv() {
-            let message_str = CStr::from_ptr(msg.message).to_str()?;
-            if message_str.contains("key pressed") {
-                // Parse the key pressed message
-                // Example: "key pressed: 0x01 (Up)"
-                if let Some(start) = message_str.find("0x") {
-                    if let Some(end) = message_str.find(" (") {
-                        let key_code_str = &message_str[start..end];
-                        if let Ok(key_code) = u32::from_str_radix(&key_code_str[2..], 16) {
-                            let key_name = match key_code {
-                                0x01 => "up",
-                                0x02 => "down",
-                                0x03 => "left",
-                                0x04 => "right",
-                                0x00 => "select", // Enter
-                                0x71 => "f1", // Blue
-                                0x72 => "f2", // Red
-                                0x73 => "f3", // Green
-                                0x74 => "f4", // Yellow
-                                _ => {
-                                    println!("Unhandled CEC key code: 0x{:X}", key_code);
-                                    continue;
-                                }
-                            };
-
-                            if let Some(action) = config.mappings.get(key_name) {
-                                println!("Mapping '{}' to action '{}'", key_name, action);
-                                device.send_key(action)?;
-                            } else {
-                                println!("No mapping found for key: {}", key_name);
-                            }
+        if let Ok(event) = rx.recv() {
+            match event.event_type {
+                CEC_EVENT_TYPE_KEYPRESS => {
+                    let key_code = unsafe { event.data.key.keycode };
+                    let key_name = match key_code {
+                        0x01 => "up",
+                        0x02 => "down",
+                        0x03 => "left",
+                        0x04 => "right",
+                        0x00 => "select", // Enter
+                        0x71 => "f1", // Blue
+                        0x72 => "f2", // Red
+                        0x73 => "f3", // Green
+                        0x74 => "f4", // Yellow
+                        _ => {
+                            println!("Unhandled CEC key code: 0x{:X}", key_code);
+                            continue;
                         }
+                    };
+
+                    if let Some(action) = config.mappings.get(key_name) {
+                        println!("Mapping '{}' to action '{}'", key_name, action);
+                        device.send_key(action)?;
+                    } else {
+                        println!("No mapping found for key: {}", key_name);
                     }
+                },
+                CEC_EVENT_TYPE_COMMAND => {
+                    println!("Received CEC command: {:?}", unsafe { event.data.command });
+                },
+                CEC_EVENT_TYPE_DEVICE_TRAFFIC => {
+                    println!("Received CEC device traffic: {:?}", unsafe { event.data.traffic });
+                },
+                _ => {
+                    println!("Unhandled CEC event type: {}", event.event_type);
                 }
             }
         }
