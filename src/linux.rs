@@ -12,9 +12,11 @@ pub struct UInputDevice {
 
 #[cfg(target_os = "linux")]
 impl UInputDevice {
-    pub fn new(_config: &Config) -> Result<Self> {
+    pub fn new(config: &Config) -> Result<Self> {
         let device = uinput::default()?
-            .name("cec2uinput")?
+            .name(&config.device_name)?
+            .vendor(config.vendor_id)
+            .product(config.product_id)
             .event(uinput::event::Keyboard::All)?
             .create()?;
         Ok(Self { device })

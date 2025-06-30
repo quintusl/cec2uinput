@@ -20,7 +20,8 @@ struct Config {
 
 #[cfg(target_os = "linux")]
 fn main() -> Result<()> {
-    let config = load_config("config.yaml")?;
+        let file = File::open("config.yaml")?;
+    let config: Config = serde_yaml::from_reader(file)?;
 
     let (tx, rx) = std::sync::mpsc::channel();
 
@@ -107,8 +108,3 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn load_config(path: &str) -> Result<Config> {
-    let file = File::open(path)?;
-    let config: Config = serde_yaml::from_reader(file)?;
-    Ok(config)
-}

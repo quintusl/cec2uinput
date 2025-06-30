@@ -9,7 +9,7 @@ serde_yaml = "0.9"
 anyhow = "1.0"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-libcec-sys = "0.2.0"
+libcec-sys = "8.0.0"
 uinput = "0.1"
 
 
