@@ -37,10 +37,10 @@ fn main() -> Result<()> {
 
     let mut cec_config: libcec_configuration = Default::default();
     let device_name_bytes = config.device_name.as_bytes();
-    let mut device_name_array: [i8; 15] = [0; 15];
+    let mut device_name_array: [std::os::raw::c_char; 15] = [0; 15];
     for (i, &byte) in device_name_bytes.iter().enumerate() {
         if i < 15 {
-            device_name_array[i] = byte as i8;
+            device_name_array[i] = byte as std::os::raw::c_char;
         }
     }
     cec_config.strDeviceName = device_name_array;

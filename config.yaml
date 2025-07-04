@@ -1,3 +1,4 @@
+device_name: cec0
 mappings:
   Select: Enter
   Up: Up
