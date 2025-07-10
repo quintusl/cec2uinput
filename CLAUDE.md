@@ -11,12 +11,12 @@ cec2uinput is a Linux-only Rust application that bridges CEC (Consumer Electroni
 - **main.rs**: Entry point that initializes CEC connection, sets up event handling, and processes incoming CEC events
 - **linux.rs**: Linux-specific uinput device implementation for sending keyboard events
 - **Config structure**: YAML-based configuration for device settings and key mappings
-- **CEC Integration**: Uses libcec-sys bindings for CEC device communication
-- **Event Loop**: Processes CEC events and maps them to keyboard actions via uinput
+- **CEC Integration**: Uses cec-rs safe wrapper for libcec CEC device communication
+- **Event Loop**: Processes CEC events via callbacks and maps them to keyboard actions via uinput
 
 ## Key Components
 
-- CEC event callback system using unsafe extern "C" functions
+- CEC event callback system using safe Rust closures with cec-rs
 - Channel-based communication between CEC callback and main event loop
 - Configurable key mappings from CEC remote buttons to keyboard actions
 - Platform-specific compilation (Linux only)
@@ -37,7 +37,7 @@ cec2uinput is a Linux-only Rust application that bridges CEC (Consumer Electroni
 
 ## Dependencies
 
-- libcec-sys: CEC device communication
+- cec-rs: Safe Rust wrapper for libcec CEC device communication
 - uinput: Linux input device creation
 - serde/serde_yaml: Configuration file parsing
 - anyhow: Error handling
@@ -52,5 +52,7 @@ cec2uinput is a Linux-only Rust application that bridges CEC (Consumer Electroni
 
 - Application requires root privileges for uinput device creation
 - Only compiles on Linux targets (conditional compilation with `#[cfg(target_os = "linux")]`)
-- CEC events are processed in a continuous loop
+- CEC events are processed via callback system with improved error handling
+- Uses cec-rs for safe wrapper around libcec with better Raspberry Pi compatibility
+- Enhanced error messages for common Raspberry Pi CEC initialization issues
 - Error handling uses Result types throughout

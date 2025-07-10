@@ -5,10 +5,8 @@ use serde::Deserialize;
 use serde_yaml;
 use std::collections::HashMap;
 use std::fs::File;
-#[cfg(target_os = "linux")]
-use std::ffi::{CString};
-use libcec_sys::{libcec_initialise, libcec_open, libcec_set_callbacks};
-use libcec_sys::{libcec_configuration, ICECCallbacks, cec_keypress};
+use cec_rs::{CecConnectionCfgBuilder, CecDeviceType, CecDeviceTypeVec, CecKeypress, CecUserControlCode};
+use std::ffi::CString;
 
 #[derive(Debug, Deserialize)]
 struct Config {
@@ -20,84 +18,79 @@ struct Config {
 
 #[cfg(target_os = "linux")]
 fn main() -> Result<()> {
-        let file = File::open("config.yaml")?;
+    let file = File::open("config.yaml")?;
     let config: Config = serde_yaml::from_reader(file)?;
 
-    let (tx, rx) = std::sync::mpsc::channel::<cec_keypress>();
-
-    unsafe extern "C" fn keypress_callback(
-        cb_param: *mut ::std::os::raw::c_void,
-        key: *const cec_keypress
-    ) {
-        let tx = &*(cb_param as *const std::sync::mpsc::Sender<cec_keypress>);
-        tx.send(*key).unwrap();
-    }
-
-    let tx_ptr = &tx as *const _ as *mut ::std::os::raw::c_void;
-
-    let mut cec_config: libcec_configuration = Default::default();
-    let device_name_bytes = config.device_name.as_bytes();
-    let mut device_name_array: [std::os::raw::c_char; 15] = [0; 15];
-    for (i, &byte) in device_name_bytes.iter().enumerate() {
-        if i < 15 {
-            device_name_array[i] = byte as std::os::raw::c_char;
-        }
-    }
-    cec_config.strDeviceName = device_name_array;
-    cec_config.bActivateSource = 1;
-    cec_config.deviceTypes.types[0] = libcec_sys::cec_device_type_RECORDING_DEVICE;
-    cec_config.iPhysicalAddress = 0x1000;
-    let mut callbacks: ICECCallbacks = Default::default();
-    callbacks.keyPress = Some(keypress_callback);
-    cec_config.callbackParam = tx_ptr;
-
     println!("Initializing CEC with device name: {}", config.device_name);
-    let cec = unsafe { libcec_initialise(&mut cec_config) };
-    if cec.is_null() {
-        eprintln!("CEC initialization failed. Common causes on Raspberry Pi:");
-        eprintln!("1. Missing libcec development packages");
-        eprintln!("2. CEC hardware not properly detected");
-        eprintln!("3. Driver conflicts (try 'sudo modprobe cec' or check /dev/cec*)");
-        eprintln!("4. Run 'cec-client -l' to check available devices");
-        anyhow::bail!("Failed to initialize CEC");
-    }
-    unsafe { libcec_set_callbacks(cec, &mut callbacks, cec_config.callbackParam) };
 
-    let port = CString::new("")?.into_raw(); // Use default port
-    println!("Opening CEC device...");
-    if unsafe { libcec_open(cec, port, 10000) } != 1 {
-        eprintln!("Failed to open CEC device. This could be due to:");
-        eprintln!("1. No CEC adapter found");
-        eprintln!("2. Permission issues (try running as root)");
-        eprintln!("3. CEC device already in use by another process");
-        eprintln!("4. Incorrect device configuration");
-        anyhow::bail!("Failed to open CEC device");
-    }
+    // Create a channel for handling keypress events
+    let (tx, rx) = std::sync::mpsc::channel::<CecKeypress>();
 
-    println!("CEC Initialized");
+    // Define keypress callback
+    let key_press_callback = {
+        let tx = tx.clone();
+        Box::new(move |keypress: CecKeypress| {
+            if let Err(e) = tx.send(keypress) {
+                eprintln!("Failed to send keypress: {}", e);
+            }
+        })
+    };
+
+    // Configure CEC connection with improved Raspberry Pi compatibility
+    let cec_config = CecConnectionCfgBuilder::default()
+        .port(CString::new("RPI").unwrap()) // Use Raspberry Pi CEC port
+        .device_name(config.device_name.clone())
+        .device_types(CecDeviceTypeVec::new(CecDeviceType::RecordingDevice))
+        .key_press_callback(key_press_callback)
+        .build()
+        .map_err(|e| anyhow::anyhow!("Failed to build CEC configuration: {}", e))?;
+
+    // Initialize CEC connection with better error handling for Raspberry Pi
+    let _cec_connection = match cec_config.open() {
+        Ok(connection) => {
+            println!("CEC connection established successfully");
+            connection
+        }
+        Err(e) => {
+            eprintln!("CEC initialization failed: {:?}", e);
+            eprintln!("Common causes on Raspberry Pi:");
+            eprintln!("1. Missing libcec development packages (try: sudo apt-get install libcec-dev)");
+            eprintln!("2. CEC hardware not properly detected");
+            eprintln!("3. Driver conflicts (try: 'sudo modprobe cec' or check /dev/cec*)");
+            eprintln!("4. Run 'cec-client -l' to check available adapters");
+            eprintln!("5. Ensure user has permission to access CEC device");
+            eprintln!("6. Check if another process is using the CEC adapter");
+            eprintln!("7. Make sure 'hdmi_ignore_cec_init=1' is NOT set in /boot/config.txt");
+            eprintln!("8. Try 'sudo systemctl stop cec' if cec service is running");
+            anyhow::bail!("Failed to initialize CEC: {:?}", e);
+        }
+    };
 
     let mut device = {
         #[cfg(target_os = "linux")]
         { linux::UInputDevice::new(&config)? }
     };
 
+    println!("CEC2UInput bridge started. Listening for CEC events...");
+
     loop {
+        // Wait for keypress events from the callback
         if let Ok(keypress) = rx.recv() {
             // Only process initial keypress, not key repeats
-            if keypress.duration == 0 {
+            if keypress.duration.as_millis() == 0 {
                 let key_code = keypress.keycode;
                 let key_name = match key_code {
-                    0x01 => "up",
-                    0x02 => "down",
-                    0x03 => "left",
-                    0x04 => "right",
-                    0x00 => "select", // Enter
-                    0x71 => "f1", // Blue
-                    0x72 => "f2", // Red
-                    0x73 => "f3", // Green
-                    0x74 => "f4", // Yellow
+                    CecUserControlCode::Up => "up",
+                    CecUserControlCode::Down => "down", 
+                    CecUserControlCode::Left => "left",
+                    CecUserControlCode::Right => "right",
+                    CecUserControlCode::Select => "select", // Enter
+                    CecUserControlCode::F1Blue => "f1", // Blue
+                    CecUserControlCode::F2Red => "f2", // Red
+                    CecUserControlCode::F3Green => "f3", // Green
+                    CecUserControlCode::F4Yellow => "f4", // Yellow
                     _ => {
-                        println!("Unhandled CEC key code: 0x{:X}", key_code);
+                        println!("Unhandled CEC key code: {:?}", key_code);
                         continue;
                     }
                 };
