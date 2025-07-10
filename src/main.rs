@@ -45,18 +45,32 @@ fn main() -> Result<()> {
     }
     cec_config.strDeviceName = device_name_array;
     cec_config.bActivateSource = 1;
+    cec_config.deviceTypes.types[0] = libcec_sys::cec_device_type_RECORDING_DEVICE;
+    cec_config.iPhysicalAddress = 0x1000;
     let mut callbacks: ICECCallbacks = Default::default();
     callbacks.keyPress = Some(keypress_callback);
     cec_config.callbackParam = tx_ptr;
 
+    println!("Initializing CEC with device name: {}", config.device_name);
     let cec = unsafe { libcec_initialise(&mut cec_config) };
     if cec.is_null() {
+        eprintln!("CEC initialization failed. Common causes on Raspberry Pi:");
+        eprintln!("1. Missing libcec development packages");
+        eprintln!("2. CEC hardware not properly detected");
+        eprintln!("3. Driver conflicts (try 'sudo modprobe cec' or check /dev/cec*)");
+        eprintln!("4. Run 'cec-client -l' to check available devices");
         anyhow::bail!("Failed to initialize CEC");
     }
     unsafe { libcec_set_callbacks(cec, &mut callbacks, cec_config.callbackParam) };
 
     let port = CString::new("")?.into_raw(); // Use default port
+    println!("Opening CEC device...");
     if unsafe { libcec_open(cec, port, 10000) } != 1 {
+        eprintln!("Failed to open CEC device. This could be due to:");
+        eprintln!("1. No CEC adapter found");
+        eprintln!("2. Permission issues (try running as root)");
+        eprintln!("3. CEC device already in use by another process");
+        eprintln!("4. Incorrect device configuration");
         anyhow::bail!("Failed to open CEC device");
     }
 
