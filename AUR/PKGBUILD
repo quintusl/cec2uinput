@@ -1,0 +1,25 @@
+# Maintainer: Your Name <your.email@example.com>
+
+pkgname=cec2uinput
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="CEC to uinput"
+arch=('x86_64')
+url="https://github.com/your-username/cec2uinput"
+license=('GPL3')
+depends=('')
+makedepends=('cargo')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cd "$srcdir/$pkgname-$pkgver"
+    cargo build --release --locked
+}
+
+package() {
+    cd "$srcdir/$pkgname-$pkgver"
+    install -D -m755 "target/release/$pkgname" "$pkgdir/usr/bin/$pkgname"
+    install -D -m644 "config.yaml" "$pkgdir/etc/cec2uinput/config.yaml"
+    install -D -m644 "cec2uinput.service" "$pkgdir/usr/lib/systemd/system/cec2uinput.service"
+}

@@ -1,0 +1,13 @@
+Source: cec2uinput
+Section: misc
+Priority: optional
+Maintainer: Your Name <your.email@example.com>
+Build-Depends: debhelper (>= 13), cargo
+Standards-Version: 4.5.0
+Homepage: https://github.com/your-username/cec2uinput
+
+Package: cec2uinput
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: CEC to uinput
+ A simple program to translate CEC commands to uinput events.

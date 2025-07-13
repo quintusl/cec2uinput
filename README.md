@@ -10,6 +10,7 @@ A Linux utility that bridges CEC (Consumer Electronics Control) remote control e
 - Configurable key mappings via YAML configuration
 - SystemD service integration for automatic startup
 - Prevents duplicate key events by filtering key repeats
+- Automatic detection of CEC adapter
 
 ## Requirements
 
@@ -35,7 +36,7 @@ sudo dnf install libcec-devel libcec
 sudo pacman -S libcec
 ```
 
-### Build from Source
+### From Source
 
 1. Clone the repository:
 ```bash
@@ -54,6 +55,27 @@ sudo cp target/release/cec2uinput /usr/local/bin/
 sudo chmod +x /usr/local/bin/cec2uinput
 ```
 
+### Debian/Ubuntu
+
+1. Build the package:
+```bash
+sudo apt-get install debhelper
+dpkg-buildpackage -us -uc
+```
+
+2. Install the package:
+```bash
+sudo dpkg -i ../cec2uinput_*.deb
+```
+
+### Arch Linux
+
+1. Build the package:
+```bash
+cd AUR
+makepkg -si
+```
+
 ## Configuration
 
 1. Copy the example configuration:
@@ -66,16 +88,29 @@ cp config.example.yaml config.yaml
 device_name: "cec2uinput"
 vendor_id: 0x1234
 product_id: 0x5678
+physical_address: 0x1000  # HDMI port 1 (0x1000), port 2 (0x2000), etc.
+cec_version: "1.4"        # CEC version: 1.3, 1.4, or 2.0
 mappings:
-  up: "Up"
-  down: "Down"
-  left: "Left"
-  right: "Right"
-  select: "Return"
-  f1: "F1"    # Blue button
-  f2: "F2"    # Red button
-  f3: "F3"    # Green button
-  f4: "F4"    # Yellow button
+  Up: "up"
+  Down: "down"
+  Left: "left"
+  Right: "right"
+  Select: "enter"
+  Exit: "esc"
+  F1Blue: "f1"
+  F2Red: "f2"
+  F3Green: "f3"
+  F4Yellow: "f4"
+  Number0: "0"
+  Number1: "1"
+  Number2: "2"
+  Number3: "3"
+  Number4: "4"
+  Number5: "5"
+  Number6: "6"
+  Number7: "7"
+  Number8: "8"
+  Number9: "9"
 ```
 
 ### Configuration Options
@@ -83,23 +118,17 @@ mappings:
 - `device_name`: Virtual input device name (appears in `/proc/bus/input/devices`)
 - `vendor_id`: USB vendor ID for the virtual device
 - `product_id`: USB product ID for the virtual device
-- `mappings`: Map CEC button names to keyboard actions
+- `physical_address`: The physical address of the HDMI port. Default is `0x1000` (HDMI port 1).
+- `cec_version`: The CEC version to use. Can be `1.3`, `1.4`, or `2.0`. Default is `1.4`.
+- `mappings`: Map CEC button names to keyboard actions.
 
 ### Available CEC Button Names
 
-- `up`, `down`, `left`, `right` - Navigation buttons
-- `select` - Enter/OK button
-- `f1` - Blue button
-- `f2` - Red button
-- `f3` - Green button
-- `f4` - Yellow button
+A full list of available CEC button names can be found in the `src/main.rs` file.
 
 ### Available Keyboard Actions
 
-- Arrow keys: `Up`, `Down`, `Left`, `Right`
-- Numbers: `0`-`9`
-- Function keys: `F1`-`F24`
-- Special keys: `Return`, `Esc`, `Space`, `Tab`, `Home`, `End`, `PageUp`, `PageDown`
+A full list of available keyboard actions can be found in the `src/linux.rs` file.
 
 ## Usage
 
@@ -166,6 +195,20 @@ The application consists of two main components:
    - Verify CEC events are being received (check logs)
    - Ensure the target application can receive keyboard events
 
+### Common causes on Raspberry Pi CM5:
+
+- Missing libcec development packages (try: `sudo apt-get install libcec-dev`)
+- CEC hardware not properly detected - check `dmesg | grep cec`
+- Driver conflicts (try: `sudo modprobe cec` or check `/dev/cec*`)
+- Run `cec-client -l` to check available adapters
+- For CM5 dual HDMI, try specifying port: `RPI:0` or `RPI:1`
+- Ensure user has permission to access CEC device (add to `video` group)
+- Check if another process is using the CEC adapter
+- Make sure `hdmi_ignore_cec_init=1` is NOT set in `/boot/config.txt`
+- Try `sudo systemctl stop cec` if cec service is running
+- Verify physical address in config matches your HDMI setup
+- Check CEC topology with `cec-ctl --show-topology`
+
 ### Debug Commands
 
 Test CEC functionality:
@@ -221,6 +264,6 @@ This project is licensed under the GNU General Public License v3.0. See the [LIC
 
 ## Acknowledgments
 
-- Built with [libcec-sys](https://crates.io/crates/libcec-sys) for CEC integration
+- Built with [cec-rs](https://crates.io/crates/cec-rs) for CEC integration
 - Uses [uinput](https://crates.io/crates/uinput) for Linux input event generation
 - Powered by the [libcec](https://github.com/Pulse-Eight/libcec) library

@@ -1,0 +1,15 @@
+#!/usr/bin/make -f
+
+%: 
+	dh $@
+
+override_dh_auto_build:
+	cargo build --release
+
+override_dh_auto_install:
+	install -d debian/cec2uinput/usr/bin
+	install -m 755 target/release/cec2uinput debian/cec2uinput/usr/bin/
+	install -d debian/cec2uinput/etc
+	install -m 644 config.yaml debian/cec2uinput/etc/
+	install -d debian/cec2uinput/lib/systemd/system
+	install -m 644 cec2uinput.service debian/cec2uinput/lib/systemd/system/

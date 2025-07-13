@@ -1,0 +1,22 @@
+name: AUR Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Publish to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v2.4.0
+        with:
+          pkgname: cec2uinput
+          pkgbuild: ./AUR/PKGBUILD
+          commit_username: ${{ secrets.AUR_USERNAME }}
+          commit_email: ${{ secrets.AUR_EMAIL }}
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: Update AUR package
+          force_push: "true"

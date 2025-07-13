@@ -1,0 +1,7 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: cec2uinput
+Source: https://github.com/your-username/cec2uinput
+
+Files: *
+Copyright: 2025 Your Name <your.email@example.com>
+License: GPL-3.0
