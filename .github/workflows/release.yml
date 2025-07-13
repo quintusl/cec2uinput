@@ -121,26 +121,29 @@ jobs:
         if: matrix.arch == 'amd64'
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends debhelper-compat rustup
+          sudo apt-get install -y --no-install-recommends debhelper-compat rustup pkg-config libcec-dev libudev-dev
+          rustup -q default stable
           rustup -q update
 
       - name: Install cross-compilation dependencies (for ARMhf)
         if: matrix.arch == 'armhf'
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends debhelper-compat rustup gcc-arm-linux-gnueabihf libc6-dev-armhf-cross pkg-config
+          sudo apt-get install -y --no-install-recommends debhelper-compat rustup pkg-config libcec-dev libudev-dev gcc-arm-linux-gnueabihf libc6-dev-armhf-cross pkg-config
           mkdir -p /opt
           # Download and extract Raspberry Pi cross-compilation tools
           git clone https://github.com/raspberrypi/tools /opt/rpi_tools
           rustup target add ${{ matrix.target }}
+          rustup -q default stable
           rustup -q update
 
       - name: Install cross-compilation dependencies (for ARM64)
         if: matrix.arch == 'arm64'
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends debhelper-compat rustup gcc-aarch64-linux-gnu libc6-dev-arm64-cross pkg-config
+          sudo apt-get install -y --no-install-recommends debhelper-compat rustup pkg-config libcec-dev libudev-dev gcc-aarch64-linux-gnu libc6-dev-arm64-cross pkg-config
           rustup target add ${{ matrix.target }}
+          rustup -q default stable
           rustup -q update
 
       - name: Build Debian package for ${{ matrix.arch }}
@@ -229,8 +232,6 @@ jobs:
         with:
           pkgname: ${{ needs.create_gh_release.outputs.pkg_name }}
           pkgbuild: ./AUR/PKGBUILD
-          assets: |
-            ./AUR/*.install
           commit_username: ${{ secrets.AUR_USERNAME }}
           commit_email: ${{ secrets.AUR_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
