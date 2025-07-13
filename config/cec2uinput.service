@@ -2,7 +2,7 @@
 Description=CEC to xdo
 
 [Service]
-ExecStart=/usr/local/bin/cec2uinput
+ExecStart=/usr/bin/cec2uinput --config /etc/cec2uinput/config.yml
 User=root
 Restart=always
 RestartSec=5

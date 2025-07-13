@@ -80,7 +80,7 @@ makepkg -si
 
 1. Copy the example configuration:
 ```bash
-cp config.example.yaml config.yaml
+cp config.yml /etc/cec2uinput/config.yml
 ```
 
 2. Edit the configuration file:

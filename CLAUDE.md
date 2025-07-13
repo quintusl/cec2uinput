@@ -26,8 +26,7 @@ The application follows a callback-driven architecture with channel-based commun
 
 ## Configuration
 
-- `config.yaml`: Main configuration file with device settings and key mappings
-- `config.example.yaml`: Example configuration showing available mappings
+- `config.yml`: Main configuration file with device settings and key mappings
 - Device name, vendor ID, and product ID are configurable
 - Key mappings translate CEC button names to action strings
 
@@ -63,8 +62,8 @@ Linux.rs maps action strings to keyboard keys:
 
 - SystemD service file provided as `cec2uinput.service`
 - Service runs as root (required for uinput device access)
-- Binary typically installed to `/usr/local/bin/cec2uinput`
-- Configuration file should be in the working directory as `config.yaml`
+- Binary typically installed to `/usr/bin/cec2uinput`
+- Configuration file should be in the working directory as `config.yml`
 
 ## Development Notes
 
@@ -81,7 +80,7 @@ Linux.rs maps action strings to keyboard keys:
 When adding new CEC button mappings:
 1. Add the `CecUserControlCode` variant to the match statement in main.rs:82-96
 2. Add the corresponding action string mapping in linux.rs:22-47
-3. Update `config.example.yaml` with the new mapping
+3. Update `config.yml` with the new mapping
 
 When debugging CEC issues:
 1. Run `./cec_troubleshoot.sh` to diagnose CEC hardware setup

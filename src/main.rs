@@ -5,8 +5,18 @@ use serde::Deserialize;
 use serde_yaml;
 use std::collections::HashMap;
 use std::fs::File;
+use std::path::PathBuf;
+use clap::Parser;
 use cec_rs::{CecConnectionCfgBuilder, CecDeviceType, CecDeviceTypeVec, CecKeypress, CecUserControlCode};
 use std::ffi::CString;
+
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Path to the configuration file
+    #[arg(short, long, value_name = "FILE")]
+    config: Option<PathBuf>,
+}
 
 #[derive(Debug, Deserialize)]
 struct Config {
@@ -30,7 +40,15 @@ fn default_cec_version() -> String {
 
 #[cfg(target_os = "linux")]
 fn main() -> Result<()> {
-    let file = File::open("config.yaml")?;
+    let args = Args::parse();
+
+    let config_path = args.config.unwrap_or_else(|| {
+        let default_path = PathBuf::from("config.yml");
+        println!("No config file specified, using default: {}", default_path.display());
+        default_path
+    });
+
+    let file = File::open(&config_path)?;
     let config: Config = serde_yaml::from_reader(file)?;
 
     println!("Initializing CEC with device name: {}", config.device_name);
@@ -39,16 +57,16 @@ fn main() -> Result<()> {
     let (tx, rx) = std::sync::mpsc::channel::<CecKeypress>();
 
     // Configure CEC connection with enhanced Raspberry Pi CM5 compatibility
-    println!("Configuring CEC with physical address: 0x{:04x}, version: {}", 
+    println!("Configuring CEC with physical address: 0x{:04x}, version: {}",
              config.physical_address, config.cec_version);
 
     // Try different CEC ports - CM5 has multiple CEC devices
     let cec_ports = ["/dev/cec0", "/dev/cec1", "RPI"];
     let mut cec_connection = None;
-    
+
     for port in &cec_ports {
         println!("Trying CEC port: {}", port);
-        
+
         let key_press_callback = {
             let tx = tx.clone();
             Box::new(move |keypress: CecKeypress| {
@@ -57,7 +75,7 @@ fn main() -> Result<()> {
                 }
             })
         };
-        
+
         match CecConnectionCfgBuilder::default()
             .port(CString::new(*port).unwrap())
             .device_name(config.device_name.clone())
@@ -129,7 +147,7 @@ fn main() -> Result<()> {
                 let cec_event = match key_code {
                     // Navigation Controls
                     CecUserControlCode::Up => "Up",
-                    CecUserControlCode::Down => "Down", 
+                    CecUserControlCode::Down => "Down",
                     CecUserControlCode::Left => "Left",
                     CecUserControlCode::Right => "Right",
                     CecUserControlCode::Select => "Select",
@@ -139,7 +157,7 @@ fn main() -> Result<()> {
                     CecUserControlCode::RightDown => "RightDown",
                     CecUserControlCode::LeftUp => "LeftUp",
                     CecUserControlCode::LeftDown => "LeftDown",
-                    
+
                     // Menu Controls
                     CecUserControlCode::RootMenu => "RootMenu",
                     CecUserControlCode::SetupMenu => "SetupMenu",
@@ -147,7 +165,7 @@ fn main() -> Result<()> {
                     CecUserControlCode::FavoriteMenu => "FavoriteMenu",
                     CecUserControlCode::TopMenu => "TopMenu",
                     CecUserControlCode::DvdMenu => "DvdMenu",
-                    
+
                     // Media Controls
                     CecUserControlCode::Play => "Play",
                     CecUserControlCode::Pause => "Pause",
@@ -160,25 +178,25 @@ fn main() -> Result<()> {
                     CecUserControlCode::Backward => "Backward",
                     CecUserControlCode::StopRecord => "StopRecord",
                     CecUserControlCode::PauseRecord => "PauseRecord",
-                    
+
                     // Audio Controls
                     CecUserControlCode::VolumeUp => "VolumeUp",
                     CecUserControlCode::VolumeDown => "VolumeDown",
                     CecUserControlCode::Mute => "Mute",
                     CecUserControlCode::SoundSelect => "SoundSelect",
-                    
+
                     // Power Controls
                     CecUserControlCode::Power => "Power",
                     CecUserControlCode::PowerOnFunction => "PowerOnFunction",
                     CecUserControlCode::PowerOffFunction => "PowerOffFunction",
                     CecUserControlCode::PowerToggleFunction => "PowerToggleFunction",
-                    
+
                     // Channel Controls
                     CecUserControlCode::ChannelUp => "ChannelUp",
                     CecUserControlCode::ChannelDown => "ChannelDown",
                     CecUserControlCode::PreviousChannel => "PreviousChannel",
                     CecUserControlCode::NextFavorite => "NextFavorite",
-                    
+
                     // Numeric Controls
                     CecUserControlCode::Number0 => "Number0",
                     CecUserControlCode::Number1 => "Number1",
@@ -195,21 +213,21 @@ fn main() -> Result<()> {
                     CecUserControlCode::NumberEntryMode => "NumberEntryMode",
                     CecUserControlCode::Dot => "Dot",
                     CecUserControlCode::Clear => "Clear",
-                    
+
                     // Function Keys
                     CecUserControlCode::F1Blue => "F1Blue",
                     CecUserControlCode::F2Red => "F2Red",
                     CecUserControlCode::F3Green => "F3Green",
                     CecUserControlCode::F4Yellow => "F4Yellow",
                     CecUserControlCode::F5 => "F5",
-                    
+
                     // Information and Help
                     CecUserControlCode::DisplayInformation => "DisplayInformation",
                     CecUserControlCode::Help => "Help",
                     CecUserControlCode::PageUp => "PageUp",
                     CecUserControlCode::PageDown => "PageDown",
                     CecUserControlCode::InputSelect => "InputSelect",
-                    
+
                     // Advanced Media Functions
                     CecUserControlCode::PlayFunction => "PlayFunction",
                     CecUserControlCode::PausePlayFunction => "PausePlayFunction",
@@ -222,7 +240,7 @@ fn main() -> Result<()> {
                     CecUserControlCode::SelectMediaFunction => "SelectMediaFunction",
                     CecUserControlCode::SelectAvInputFunction => "SelectAvInputFunction",
                     CecUserControlCode::SelectAudioInputFunction => "SelectAudioInputFunction",
-                    
+
                     // Other Controls
                     CecUserControlCode::Angle => "Angle",
                     CecUserControlCode::SubPicture => "SubPicture",
@@ -235,7 +253,7 @@ fn main() -> Result<()> {
                     CecUserControlCode::Data => "Data",
                     CecUserControlCode::AnReturn => "AnReturn",
                     CecUserControlCode::AnChannelsList => "AnChannelsList",
-                    
+
                     // Unknown or unhandled
                     CecUserControlCode::Unknown => {
                         println!("Unknown CEC key code received");

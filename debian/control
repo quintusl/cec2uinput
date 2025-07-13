@@ -1,10 +1,10 @@
 Source: cec2uinput
 Section: misc
 Priority: optional
-Maintainer: Your Name <your.email@example.com>
-Build-Depends: debhelper (>= 13), cargo
+Maintainer: Quintus Leung <quintusl@gmail.com>
+Build-Depends: debhelper (>= 13), cargo, rustc, libcec-dev, libudev-dev
 Standards-Version: 4.5.0
-Homepage: https://github.com/your-username/cec2uinput
+Homepage: https://github.com/quintusl/cec2uinput
 
 Package: cec2uinput
 Architecture: any
