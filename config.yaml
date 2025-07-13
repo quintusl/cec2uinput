@@ -1,10 +1,31 @@
-device_name: cec0
-mappings:
-  Select: Enter
-  Up: Up
-  Down: Down
-  Left: Left
-  Right: Right
-  Enter: Enter
+device_name: "CM5-CEC-Bridge"
 vendor_id: 0x046d
 product_id: 0xc52b
+physical_address: 0x1000  # HDMI port 1 (0x1000), port 2 (0x2000), etc.
+cec_version: "1.4"        # CEC version: 1.3, 1.4, or 2.0
+mappings:
+  # Basic Navigation
+  Up: "up"            # CEC Up button -> Up arrow key
+  Down: "down"        # CEC Down button -> Down arrow key
+  Left: "left"        # CEC Left button -> Left arrow key
+  Right: "right"      # CEC Right button -> Right arrow key
+  Select: "enter"    # CEC Select button -> Enter key
+  Exit: "esc"        # CEC Exit button -> Escape key
+  
+  # Color Buttons
+  F2Red: "f1"          # CEC Red button -> F1 key
+  F3Green: "f2"      # CEC Green button -> F2 key
+  F4Yellow: "f3"    # CEC Yellow button -> F3 key
+  F1Blue: "f4"        # CEC Blue button -> F4 key
+  
+  # Numbers
+  Number0: "0"        # CEC Number 0 button -> 0 key
+  Number1: "1"        # CEC Number 1 button -> 1 key
+  Number2: "2"        # CEC Number 2 button -> 2 key
+  Number3: "3"        # CEC Number 3 button -> 3 key
+  Number4: "4"        # CEC Number 4 button -> 4 key
+  Number5: "5"        # CEC Number 5 button -> 5 key
+  Number6: "6"        # CEC Number 6 button -> 6 key
+  Number7: "7"        # CEC Number 7 button -> 7 key
+  Number8: "8"        # CEC Number 8 button -> 8 key
+  Number9: "9"        # CEC Number 9 button -> 9 key
