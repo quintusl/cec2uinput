@@ -8,7 +8,6 @@ url="https://github.com/quintusl/$pkgname"
 license=('GPLv3')
 depends=('libcec' 'systemd-libs' 'glibc' 'gcc-libs')
 makedepends=('cargo')
-install=$pkgname.install
 backup=("etc/$pkgname/config.yml")
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
 sha256sums=('SKIP')
@@ -46,5 +45,5 @@ package() {
 
     # Install documentation
     install -Dm0644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
-    install -Dm0644 LICENSE-MIT "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    install -Dm0644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }

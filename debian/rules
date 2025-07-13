@@ -10,6 +10,7 @@ override_dh_auto_install:
 	install -d debian/cec2uinput/usr/bin
 	install -m 755 target/release/cec2uinput debian/cec2uinput/usr/bin/
 	install -d debian/cec2uinput/etc
+	install -d debian/cec2uinput/etc/cec2uinput
 	install -m 640 config/config.yml debian/cec2uinput/etc/cec2uinput/config.yml
 	install -d debian/cec2uinput/lib/systemd/system
-	install -m 644 cec2uinput.service debian/cec2uinput/lib/systemd/system/
+	install -m 644 config/cec2uinput.service debian/cec2uinput/lib/systemd/system/
