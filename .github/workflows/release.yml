@@ -117,19 +117,45 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
+      - name: Setup APT sources
+        run: |
+          source /etc/os-release
+          echo "Setting up APT multi-arch sources for $ID $VERSION_CODENAME"
+          cat /etc/apt/sources.list.d/ubuntu.sources \
+           | sed -e 's/Types: deb/Types: deb\nArchitecture: amd64/g' \
+           | sudo tee /etc/apt/sources.list.d/ubuntu.sources
+          cat <<EOF | sudo tee /etc/apt/sources.list.d/ubuntu-ports.sources
+          Types: deb
+          URIs: http://ports.ubuntu.com/ubuntu-ports/
+          Suites: $VERSION_CODENAME $VERSION_CODENAME-updates $VERSION_CODENAME-backports
+          Components: main restricted universe multiverse
+          Architectures: armhf arm64
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          Types: deb
+          URIs: http://security.ports.ubuntu.com/ubuntu-ports/
+          Suites: $VERSION_CODENAME-security
+          Components: main restricted universe multiverse
+          Architectures: armhf arm64
+          Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+          EOF
+          sudo apt update -qq
       - name: Install compilation dependencies (for amd64)
         if: matrix.arch == 'amd64'
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends debhelper-compat rustup pkg-config libcec-dev libudev-dev
+          sudo apt install -y --no-install-recommends debhelper-compat rustup pkg-config libcec-dev libudev-dev
           rustup -q default stable
           rustup -q update
 
       - name: Install cross-compilation dependencies (for ARMhf)
         if: matrix.arch == 'armhf'
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends debhelper-compat rustup pkg-config libcec-dev libudev-dev gcc-arm-linux-gnueabihf libc6-dev-armhf-cross pkg-config
+          dpkg --add-architecture ${{ matrix.arch }}
+          sudo apt update -qq
+          sudo apt install -y --no-install-recommends \
+            debhelper-compat rustup pkg-config gcc-arm-linux-gnueabihf libc6-dev-armhf-cross \
+            libcec-dev:${{ matrix.arch }} libudev-dev:${{ matrix.arch }}
           mkdir -p /opt
           # Download and extract Raspberry Pi cross-compilation tools
           git clone https://github.com/raspberrypi/tools /opt/rpi_tools
@@ -140,8 +166,11 @@ jobs:
       - name: Install cross-compilation dependencies (for ARM64)
         if: matrix.arch == 'arm64'
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends debhelper-compat rustup pkg-config libcec-dev libudev-dev gcc-aarch64-linux-gnu libc6-dev-arm64-cross pkg-config
+          dpkg --add-architecture ${{ matrix.arch }}
+          sudo apt update -qq
+          sudo apt install -y --no-install-recommends \
+            debhelper-compat rustup pkg-config  gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
+            libcec-dev:${{ matrix.arch }} libudev-dev:${{ matrix.arch }}
           rustup target add ${{ matrix.target }}
           rustup -q default stable
           rustup -q update
@@ -211,8 +240,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends git gettext-base
+          sudo apt update -qq
+          sudo apt install -y --no-install-recommends git gettext-base
 
       - name: Generate PKGBUILD
         env:

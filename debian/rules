@@ -4,11 +4,19 @@
 	dh $@
 
 override_dh_auto_build:
+ifdef CARGO_BUILD_TARGET
+	cargo build --release --target $(CARGO_BUILD_TARGET)
+else
 	cargo build --release
+endif
 
 override_dh_auto_install:
 	install -d debian/cec2uinput/usr/bin
-	install -m 755 target/release/cec2uinput debian/cec2uinput/usr/bin/
+ifdef CARGO_BUILD_TARGET
+	install -D -m755 target/$(CARGO_BUILD_TARGET)/release/cec2uinput debian/cec2uinput/usr/bin/cec2uinput
+else
+	install -D -m755 target/release/cec2uinput debian/cec2uinput/usr/bin/cec2uinput
+endif
 	install -d debian/cec2uinput/etc
 	install -d debian/cec2uinput/etc/cec2uinput
 	install -m 640 config/config.yml debian/cec2uinput/etc/cec2uinput/config.yml

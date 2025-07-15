@@ -2,7 +2,7 @@ mod linux;
 
 use anyhow::Result;
 use serde::Deserialize;
-use serde_yaml;
+use serde_yaml_ng;
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::PathBuf;
@@ -49,7 +49,7 @@ fn main() -> Result<()> {
     });
 
     let file = File::open(&config_path)?;
-    let config: Config = serde_yaml::from_reader(file)?;
+    let config: Config = serde_yaml_ng::from_reader(file)?;
 
     println!("Initializing CEC with device name: {}", config.device_name);
 
