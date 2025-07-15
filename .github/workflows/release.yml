@@ -151,7 +151,7 @@ jobs:
       - name: Install cross-compilation dependencies (for ARMhf)
         if: matrix.arch == 'armhf'
         run: |
-          dpkg --add-architecture ${{ matrix.arch }}
+          sudo dpkg --add-architecture ${{ matrix.arch }}
           sudo apt update -qq
           sudo apt install -y --no-install-recommends \
             debhelper-compat rustup pkg-config gcc-arm-linux-gnueabihf libc6-dev-armhf-cross \
@@ -166,7 +166,7 @@ jobs:
       - name: Install cross-compilation dependencies (for ARM64)
         if: matrix.arch == 'arm64'
         run: |
-          dpkg --add-architecture ${{ matrix.arch }}
+          sudo dpkg --add-architecture ${{ matrix.arch }}
           sudo apt update -qq
           sudo apt install -y --no-install-recommends \
             debhelper-compat rustup pkg-config  gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
