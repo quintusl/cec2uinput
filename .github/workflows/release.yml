@@ -144,7 +144,8 @@ jobs:
       - name: Install compilation dependencies (for amd64)
         if: matrix.arch == 'amd64'
         run: |
-          sudo apt install -y --no-install-recommends debhelper-compat rustup pkg-config libcec-dev libudev-dev
+          sudo apt install -y --no-install-recommends debhelper-compat rustup pkg-config \
+            build-essential libcec-dev libudev-dev
           rustup -q default stable
           rustup -q update
 
@@ -155,7 +156,7 @@ jobs:
           sudo apt update -qq
           sudo apt install -y --no-install-recommends \
             debhelper-compat rustup pkg-config gcc-arm-linux-gnueabihf libc6-dev-armhf-cross \
-            libcec-dev:${{ matrix.arch }} libudev-dev:${{ matrix.arch }}
+            build-essential:${{ matrix.arch }} libcec-dev:${{ matrix.arch }} libudev-dev:${{ matrix.arch }}
           mkdir -p /opt
           # Download and extract Raspberry Pi cross-compilation tools
           git clone https://github.com/raspberrypi/tools /opt/rpi_tools
@@ -170,7 +171,7 @@ jobs:
           sudo apt update -qq
           sudo apt install -y --no-install-recommends \
             debhelper-compat rustup pkg-config  gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
-            libcec-dev:${{ matrix.arch }} libudev-dev:${{ matrix.arch }}
+            build-essential:${{ matrix.arch }} libcec-dev:${{ matrix.arch }} libudev-dev:${{ matrix.arch }}
           rustup target add ${{ matrix.target }}
           rustup -q default stable
           rustup -q update
