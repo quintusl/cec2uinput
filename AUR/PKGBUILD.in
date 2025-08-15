@@ -11,6 +11,7 @@ makedepends=('cargo')
 backup=("etc/$pkgname/config.yml")
 source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
 sha256sums=('SKIP')
+options=('!lto')
 
 prepare() {
     cd "$pkgname-$pkgver"
