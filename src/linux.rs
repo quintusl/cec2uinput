@@ -1,6 +1,6 @@
 use anyhow::Result;
-use uinput::event::keyboard;
-use uinput::event::{relative, controller};
+use uinput::event::{keyboard, relative};
+use uinput::event::controller::Controller;
 use crate::Config;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
@@ -19,8 +19,9 @@ impl UInputDevice {
             .vendor(config.vendor_id)
             .product(config.product_id)
             .event(uinput::event::Keyboard::All)?
-            .event(controller::Mouse::iter_variants())?
-            .event(relative::Position::iter_variants())?
+            .event(uinput::event::Controller::All)?
+            .event(relative::Position::X)?
+            .event(relative::Position::Y)?
             .create()?;
         Ok(Self { device, move_counters: HashMap::new(), last_move: None })
     }
@@ -148,12 +149,10 @@ impl UInputDevice {
                 self.device.position(&relative::Position::Y, delta)?;
             }
             "mouse_click_left" | "mouse_left_click" | "mouse_lclick" => {
-                self.device.press(&controller::Mouse::Left)?;
-                self.device.release(&controller::Mouse::Left)?;
+                self.device.click(&Controller::Mouse(uinput::event::controller::Mouse::Left))?;
             }
             "mouse_click_right" | "mouse_right_click" | "mouse_rclick" => {
-                self.device.press(&controller::Mouse::Right)?;
-                self.device.release(&controller::Mouse::Right)?;
+                self.device.click(&Controller::Mouse(uinput::event::controller::Mouse::Right))?;
             }
             _ => {
                 println!("Unknown mouse action: {}", action);
@@ -167,8 +166,8 @@ impl UInputDevice {
     // Helper: map modifier names to keys
     fn modifier_key(name: &str) -> Option<keyboard::Key> {
         match name.trim() {
-            "ctrl" | "control" | "lctrl" | "leftctrl" => Some(keyboard::Key::LeftCtrl),
-            "rctrl" | "rightctrl" => Some(keyboard::Key::RightCtrl),
+            "ctrl" | "control" | "lctrl" | "leftctrl" => Some(keyboard::Key::LeftControl),
+            "rctrl" | "rightctrl" => Some(keyboard::Key::RightControl),
             "alt" | "lalt" | "leftalt" => Some(keyboard::Key::LeftAlt),
             "ralt" | "rightalt" => Some(keyboard::Key::RightAlt),
             "shift" | "lshift" | "leftshift" => Some(keyboard::Key::LeftShift),
