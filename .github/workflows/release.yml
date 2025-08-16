@@ -42,10 +42,66 @@ jobs:
             --draft=false \
             --prerelease=false
 
+  update_changelog:
+    name: Update Debian Changelog
+    runs-on: ubuntu-latest
+    needs: create_gh_release
+    permissions:
+      contents: write
+    outputs:
+      changelog_updated: ${{ steps.commit.outputs.changelog_updated }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required to get all tags
+          token: ${{ secrets.PAT }} # Use PAT to allow pushing to the repo
+
+      - name: Update changelog
+        id: update
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the latest and previous tags
+          LATEST_TAG=${{ needs.create_gh_release.outputs.tag_name }}
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "tags/$LATEST_TAG^" || git rev-list --max-parents=0 HEAD)
+          # Get the commit messages between the two tags
+          COMMIT_LOG=$(git log --pretty=format:"  * %s" $PREVIOUS_TAG..$LATEST_TAG)
+          # Get the release notes
+          RELEASE_NOTES=$(gh release view $LATEST_TAG --json body --jq .body)
+          # Create the new changelog entry
+          CHANGELOG_ENTRY="${{ needs.create_gh_release.outputs.pkg_name }} (${{ needs.create_gh_release.outputs.version }}-1) unstable; urgency=medium
+
+          $COMMIT_LOG
+
+          $RELEASE_NOTES
+
+           -- github-actions[bot] <github-actions[bot]@users.noreply.github.com>  $(date -R)
+          "
+          # Prepend the new entry to the changelog
+          echo "$CHANGELOG_ENTRY" | cat - debian/changelog > temp_changelog && mv temp_changelog debian/changelog
+
+      - name: Commit and push changes
+        id: commit
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add debian/changelog
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            echo "changelog_updated=false" >> $GITHUB_OUTPUT
+          else
+            git commit -m "Update debian/changelog for release ${{ needs.create_gh_release.outputs.tag_name }}"
+            git push
+            echo "changelog_updated=true" >> $GITHUB_OUTPUT
+          fi
+
   build_and_upload_source_archive:
     name: Build and Upload Source Archive
     runs-on: ubuntu-latest
-    needs: create_gh_release
+    needs:
+      - create_gh_release
+      - update_changelog
     permissions:
       contents: write # Required to upload assets (read permission is implicit for checkout)
     steps:
@@ -83,7 +139,9 @@ jobs:
   build_debian_packages:
     name: Build Debian Package (${{ matrix.arch }})
     runs-on: ubuntu-latest
-    needs: create_gh_release
+    needs:
+      - create_gh_release
+      - update_changelog
     permissions:
       contents: write # Required to upload assets (read permission is implicit for checkout)
     strategy:
@@ -195,6 +253,7 @@ jobs:
     needs:
       - create_gh_release
       - build_and_upload_source_archive
+      - update_changelog
     if: '!github.event.prerelease'
     runs-on: ubuntu-latest
     steps:
