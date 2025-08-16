@@ -8,19 +8,14 @@ cec2uinput (0.1.2-1) unstable; urgency=medium
   * Fix Debian builds by installing debhelper
   * Merge pull request #1 from quintusl/fix-debian-arm64-build
   * Fix Debian arm64 cross-compilation build
+  * New upstream for fixing Arch Linux build.
+  * Fix Debian package build for arm64.
 
 Automated release for cec2uinput version 0.1.2.
 See CHANGELOG.md for details (if available).
 Assets will be uploaded by subsequent jobs.
 
  -- github-actions[bot] <github-actions[bot]@users.noreply.github.com>  Sat, 16 Aug 2025 18:04:13 +0000
-
-cec2uinput (0.1.2-1) UNRELEASED; urgency=medium
-
-  * New upstream for fixing Arch Linux build.
-  * Fix Debian package build for arm64.
-
- -- Quintus Leung <quintusl@gmail.com>  Sat, 16 Aug 2025 16:26:45 +0100
 
 cec2uinput (0.1.0-1) unstable; urgency=medium
 
