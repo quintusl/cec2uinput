@@ -49,13 +49,13 @@ jobs:
     permissions:
       contents: write
     outputs:
-      changelog_updated: ${{ steps.commit.outputs.changelog_updated }}
+      changelog_updated: ${{ steps.flag_changelog_updated.outputs.changelog_updated }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           fetch-depth: 0 # Required to get all tags
-          token: ${{ secrets.PAT }} # Use PAT to allow pushing to the repo
 
       - name: Update changelog
         id: update
@@ -81,20 +81,25 @@ jobs:
           # Prepend the new entry to the changelog
           echo "$CHANGELOG_ENTRY" | cat - debian/changelog > temp_changelog && mv temp_changelog debian/changelog
 
-      - name: Commit and push changes
-        id: commit
+      - name: Commit & Push changes
+        uses: actions-js/push@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          message: "Update debian/changelog for release ${{ needs.create_gh_release.outputs.tag_name }}"
+          directory: debian/changelog
+          branch: main # Change to your default branch if different
+
+      - name: Check if changelog was updated
+        id: flag_changelog_updated
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add debian/changelog
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
+          if git diff --exit-code debian/changelog; then
+            echo "Changelog not updated."
             echo "changelog_updated=false" >> $GITHUB_OUTPUT
           else
-            git commit -m "Update debian/changelog for release ${{ needs.create_gh_release.outputs.tag_name }}"
-            git push
+            echo "Changelog updated."
             echo "changelog_updated=true" >> $GITHUB_OUTPUT
           fi
+          exit 0
 
   build_and_upload_source_archive:
     name: Build and Upload Source Archive
