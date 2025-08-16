@@ -42,7 +42,7 @@ jobs:
             --draft=false \
             --prerelease=false
 
-  update_changelog:
+  update_debian_changelog:
     name: Update Debian Changelog
     runs-on: ubuntu-latest
     needs: create_gh_release
@@ -106,7 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - create_gh_release
-      - update_changelog
+      - update_debian_changelog
     permissions:
       contents: write # Required to upload assets (read permission is implicit for checkout)
     steps:
@@ -146,7 +146,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - create_gh_release
-      - update_changelog
+      - update_debian_changelog
     permissions:
       contents: write # Required to upload assets (read permission is implicit for checkout)
     strategy:
@@ -258,7 +258,7 @@ jobs:
     needs:
       - create_gh_release
       - build_and_upload_source_archive
-      - update_changelog
+      - update_debian_changelog
     if: '!github.event.prerelease'
     runs-on: ubuntu-latest
     steps:
@@ -292,3 +292,60 @@ jobs:
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
           commit_message: Update AUR package
           ssh_keyscan_types: rsa,ecdsa,ed25519
+
+  generate_changelog:
+    name: Generate CHANGELOG
+    runs-on: ubuntu-latest
+    needs: create_gh_release
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # Required to get tags and history
+
+      - name: Generate CHANGELOG.md
+        id: gen_changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LATEST_TAG: ${{ needs.create_gh_release.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          echo "Generating CHANGELOG.md for ${LATEST_TAG}"
+
+          # Determine previous tag (exclude current)
+          PREV_TAG=$(git tag --sort=-creatordate | grep -v "^${LATEST_TAG}$" | head -n1 || true)
+
+          if [ -z "${PREV_TAG}" ]; then
+            RANGE="${LATEST_TAG}"
+            COMMIT_LOG=$(git log --pretty=format:"- %s (%h)" "${LATEST_TAG}" || true)
+          else
+            RANGE="${PREV_TAG}..${LATEST_TAG}"
+            COMMIT_LOG=$(git log --pretty=format:"- %s (%h)" "${RANGE}" || true)
+          fi
+
+          RELEASE_NOTES=$(gh release view ${LATEST_TAG} --json body --jq .body || true)
+          DATE=$(date -u +"%Y-%m-%d")
+
+          # Build changelog entry
+          CHANGELOG_ENTRY="## ${LATEST_TAG} - ${DATE}\n\n${RELEASE_NOTES}\n\n### Commits\n\n${COMMIT_LOG}\n"
+
+          # Prepend the entry to CHANGELOG.md (create if missing)
+          TMPFILE=$(mktemp)
+          echo -e "# Changelog\n" > "$TMPFILE"
+          echo -e "$CHANGELOG_ENTRY" >> "$TMPFILE"
+          if [ -f CHANGELOG.md ]; then
+            echo "" >> "$TMPFILE"
+            cat CHANGELOG.md >> "$TMPFILE"
+          fi
+          mv "$TMPFILE" CHANGELOG.md
+
+      - name: Commit & Push CHANGELOG
+        uses: actions-js/push@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          message: "Add/Update CHANGELOG.md for release ${{ needs.create_gh_release.outputs.tag_name }}"
+          directory: .
+          branch: main # Change if your default branch differs
