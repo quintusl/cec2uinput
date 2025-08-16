@@ -1,3 +1,25 @@
+cec2uinput (0.1.2-1) unstable; urgency=medium
+
+  * Fix update_changelogs Github action.
+  * Merge branch 'main' of github.com:quintusl/cec2uinput
+  * Fix Github action update_changelogs job.
+  * Update debian/changelog for release v0.1.2
+  * Add Github action for generating CHANGELOG.md.
+  * Amend debian/changelog.
+  * Update debian/changelog for release v0.1.2
+  * Fix github actions for debian changelog.
+  * Update github actions for debian changelog.
+  * feat: Automate debian/changelog updates on release
+  * Update Debian changelog
+  * Merge branch 'fix-debian-arm64-build' of github.com:quintusl/cec2uinput
+  * Fix Debian builds by installing debhelper
+  * Merge pull request #1 from quintusl/fix-debian-arm64-build
+  * Fix Debian arm64 cross-compilation build
+
+  Automated release for cec2uinput version 0.1.2.
+
+ -- github-actions[bot] <github-actions[bot]@users.noreply.github.com>  Sat, 16 Aug 2025 20:24:44 +0000
+
 cec2uinput (0.1.0-1) unstable; urgency=medium
 
   * Initial release.
