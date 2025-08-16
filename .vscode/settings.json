@@ -1,6 +1,10 @@
 {
     "cSpell.words": [
+        "creatordate",
+        "dtolnay",
         "libcec",
-        "libudev"
+        "libudev",
+        "mktemp",
+        "pipefail"
     ]
 }
