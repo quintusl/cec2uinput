@@ -2,7 +2,7 @@ Source: cec2uinput
 Section: misc
 Priority: optional
 Maintainer: Quintus Leung <quintusl@gmail.com>
-Build-Depends: debhelper (>= 13), pkg-config, rustup, libcec-dev, libudev-dev
+Build-Depends: debhelper (>= 13), pkg-config, cargo, rustc, libcec-dev (>= 6.0.2) | libcec-dev:any, libudev-dev | libudev-dev:any
 Standards-Version: 4.5.0
 Homepage: https://github.com/quintusl/cec2uinput
 
