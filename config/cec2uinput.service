@@ -1,5 +1,5 @@
 [Unit]
-Description=CEC to xdo
+Description=CEC to uinput
 
 [Service]
 ExecStart=/usr/bin/cec2uinput --config /etc/cec2uinput/config.yml
