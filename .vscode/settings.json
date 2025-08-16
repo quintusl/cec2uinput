@@ -5,6 +5,11 @@
         "libcec",
         "libudev",
         "mktemp",
-        "pipefail"
+        "pgdown",
+        "pgup",
+        "pipefail",
+        "playpause",
+        "spacebar",
+        "volumemute"
     ]
 }

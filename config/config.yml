@@ -4,6 +4,12 @@ product_id: 0xc52b
 physical_address: 0x1000  # HDMI port 1 (0x1000), port 2 (0x2000), etc.
 cec_version: "1.4"        # CEC version: 1.3, 1.4, or 2.0
 mappings:
+  # Example usages (supported syntaxes):
+  # "CTRL[c], enter"  -> press Ctrl+C, then press Enter
+  # "ALT[a,f]"        -> press Alt, then A, then F while Alt held, then release Alt
+  # "CTRL+ALT+del"    -> press Ctrl and Alt, then press Delete while both modifiers held, then release modifiers
+  # You can use aliases like: del, ins, pgup, pgdown, return, spacebar
+
   # Basic Navigation
   Up: "up"            # CEC Up button -> Up arrow key
   Down: "down"        # CEC Down button -> Down arrow key
@@ -11,13 +17,13 @@ mappings:
   Right: "right"      # CEC Right button -> Right arrow key
   Select: "enter"    # CEC Select button -> Enter key
   Exit: "esc"        # CEC Exit button -> Escape key
-  
+
   # Color Buttons
   F2Red: "f1"          # CEC Red button -> F1 key
   F3Green: "f2"      # CEC Green button -> F2 key
   F4Yellow: "f3"    # CEC Yellow button -> F3 key
   F1Blue: "f4"        # CEC Blue button -> F4 key
-  
+
   # Numbers
   Number0: "0"        # CEC Number 0 button -> 0 key
   Number1: "1"        # CEC Number 1 button -> 1 key
@@ -29,3 +35,19 @@ mappings:
   Number7: "7"        # CEC Number 7 button -> 7 key
   Number8: "8"        # CEC Number 8 button -> 8 key
   Number9: "9"        # CEC Number 9 button -> 9 key
+
+  # More examples:
+  #
+  # Modifier Sequences
+  #  Number0: "ctrl+alt+del"  # Press Ctrl and Alt, then Delete
+  #  Number1: "shift+tab"        # Press Shift, then Tab
+  #  Exit: "alt+f4"              # Press Alt, then F4
+  #
+  # Bracket Lists
+  #  Number2: "ctrl+[a,b,c]"  # Press Ctrl, then A, B, C in sequence
+  #  Number3: "alt+[x,y]"      # Press Alt, then X, Y in sequence
+  #
+  # Simultaneous Keys
+  #  Number4: "playpause"      # Simultaneously press Play and Pause
+  #  Number5: "volumemute"    # Simultaneously press Volume Up and Volume Down
+  #
