@@ -1,9 +1,15 @@
 use anyhow::Result;
 use uinput::event::keyboard;
+use uinput::event::{relative, controller};
 use crate::Config;
+use std::collections::HashMap;
+use std::time::{Duration, Instant};
 
 pub struct UInputDevice {
     device: uinput::Device,
+    // counters for exponential mouse movement per axis+direction (keys like "x+", "x-", "y+", "y-")
+    move_counters: HashMap<String, u8>,
+    last_move: Option<Instant>,
 }
 
 impl UInputDevice {
@@ -13,8 +19,10 @@ impl UInputDevice {
             .vendor(config.vendor_id)
             .product(config.product_id)
             .event(uinput::event::Keyboard::All)?
+            .event(controller::Mouse::iter_variants())?
+            .event(relative::Position::iter_variants())?
             .create()?;
-        Ok(Self { device })
+        Ok(Self { device, move_counters: HashMap::new(), last_move: None })
     }
 
     pub fn send_key(&mut self, action: &str) -> Result<()> {
@@ -24,6 +32,12 @@ impl UInputDevice {
         // Split top-level sequence items by ',' (e.g. "CTRL[c], enter")
         for part in s.split(',').map(|p| p.trim()).filter(|p| !p.is_empty()) {
             let part = part.to_lowercase();
+
+            // If this is a mouse mapped action, handle separately (prefix "mouse_" or exact names)
+            if part.starts_with("mouse_") {
+                self.send_mouse(&part)?;
+                continue;
+            }
 
             // Handle modifier with bracketed list, e.g. "alt[a,f]"
             if let Some(idx) = part.find('[') {
@@ -80,6 +94,72 @@ impl UInputDevice {
         }
 
         // synchronize once after the sequence
+        self.device.synchronize()?;
+        Ok(())
+    }
+
+    // send mouse events based on mapping names like:
+    // mouse_right, mouse_left, mouse_up, mouse_down, mouse_click_left, mouse_click_right
+    // movement uses exponential steps: [1,10,50,100,500] and resets after 500ms idle
+    fn send_mouse(&mut self, action: &str) -> Result<()> {
+        // reset counters if idle > 500ms
+        let now = Instant::now();
+        if let Some(last) = self.last_move {
+            if now.duration_since(last) > Duration::from_millis(500) {
+                self.move_counters.clear();
+            }
+        }
+        self.last_move = Some(now);
+
+        // movement steps
+        let steps = [1, 10, 50, 100, 500];
+
+        match action {
+            "mouse_right" => {
+                let key = "x+".to_string();
+                let cnt = self.move_counters.entry(key.clone()).or_insert(0);
+                if *cnt < steps.len() as u8 { *cnt += 1; }
+                let idx = (*cnt as usize).saturating_sub(1).min(steps.len() - 1);
+                let delta = steps[idx] as i32;
+                self.device.position(&relative::Position::X, delta)?;
+            }
+            "mouse_left" => {
+                let key = "x-".to_string();
+                let cnt = self.move_counters.entry(key.clone()).or_insert(0);
+                if *cnt < steps.len() as u8 { *cnt += 1; }
+                let idx = (*cnt as usize).saturating_sub(1).min(steps.len() - 1);
+                let delta = -(steps[idx] as i32);
+                self.device.position(&relative::Position::X, delta)?;
+            }
+            "mouse_down" => {
+                let key = "y+".to_string();
+                let cnt = self.move_counters.entry(key.clone()).or_insert(0);
+                if *cnt < steps.len() as u8 { *cnt += 1; }
+                let idx = (*cnt as usize).saturating_sub(1).min(steps.len() - 1);
+                let delta = steps[idx] as i32;
+                self.device.position(&relative::Position::Y, delta)?;
+            }
+            "mouse_up" => {
+                let key = "y-".to_string();
+                let cnt = self.move_counters.entry(key.clone()).or_insert(0);
+                if *cnt < steps.len() as u8 { *cnt += 1; }
+                let idx = (*cnt as usize).saturating_sub(1).min(steps.len() - 1);
+                let delta = -(steps[idx] as i32);
+                self.device.position(&relative::Position::Y, delta)?;
+            }
+            "mouse_click_left" | "mouse_left_click" | "mouse_lclick" => {
+                self.device.press(&controller::Mouse::Left)?;
+                self.device.release(&controller::Mouse::Left)?;
+            }
+            "mouse_click_right" | "mouse_right_click" | "mouse_rclick" => {
+                self.device.press(&controller::Mouse::Right)?;
+                self.device.release(&controller::Mouse::Right)?;
+            }
+            _ => {
+                println!("Unknown mouse action: {}", action);
+            }
+        }
+
         self.device.synchronize()?;
         Ok(())
     }
