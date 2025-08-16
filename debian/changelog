@@ -1,5 +1,18 @@
 cec2uinput (0.2.0-1) unstable; urgency=medium
 
+  * Update debian/changelog for release v0.2.0
+  * Update systemd service name.
+  * Fix mouse event handling.
+  * Support mouse events.
+  * Support key modifiers and key sequence.
+  * Update debian/changelog for release v0.1.2
+
+  Automated release for cec2uinput version 0.2.0.
+
+ -- github-actions[bot] <github-actions[bot]@users.noreply.github.com>  Sat, 16 Aug 2025 23:04:21 +0000
+
+cec2uinput (0.2.0-1) unstable; urgency=medium
+
   * Update systemd service name.
   * Fix mouse event handling.
   * Support mouse events.

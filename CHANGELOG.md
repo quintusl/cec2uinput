@@ -6,6 +6,22 @@
 
 ### Commits
 
+- Update debian/changelog for release v0.2.0 (2fe2d76)
+- Update systemd service name. (c92d110)
+- Fix mouse event handling. (58c0e29)
+- Support mouse events. (cfcd733)
+- Support key modifiers and key sequence. (8d1f13f)
+- Update debian/changelog for release v0.1.2 (328bc6d)
+
+
+# Changelog
+
+## v0.2.0 - 2025-08-16
+
+  Automated release for cec2uinput version 0.2.0.
+
+### Commits
+
 - Update systemd service name. (c92d110)
 - Fix mouse event handling. (58c0e29)
 - Support mouse events. (cfcd733)
