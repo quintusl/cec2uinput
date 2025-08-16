@@ -1,3 +1,10 @@
+cec2uinput (0.1.2-1) UNRELEASED; urgency=medium
+
+  * New upstream for fixing Arch Linux build.
+  * Fix Debian package build for arm64.
+
+ -- Quintus Leung <quintusl@gmail.com>  Sat, 16 Aug 2025 16:26:45 +0100
+
 cec2uinput (0.1.0-1) unstable; urgency=medium
 
   * Initial release.
