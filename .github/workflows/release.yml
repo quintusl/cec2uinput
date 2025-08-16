@@ -86,7 +86,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           message: "Update debian/changelog for release ${{ needs.create_gh_release.outputs.tag_name }}"
-          directory: debian/changelog
+          directory: debian
           branch: main # Change to your default branch if different
 
       - name: Check if changelog was updated
