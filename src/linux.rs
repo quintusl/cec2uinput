@@ -22,6 +22,9 @@ impl UInputDevice {
             .event(uinput::event::Controller::All)?
             .event(relative::Position::X)?
             .event(relative::Position::Y)?
+            .event(uinput::event::controller::Mouse::Left)?
+            .event(uinput::event::controller::Mouse::Right)?
+            .event(uinput::event::controller::Mouse::Middle)?
             .create()?;
         Ok(Self { device, move_counters: HashMap::new(), last_move: None })
     }
