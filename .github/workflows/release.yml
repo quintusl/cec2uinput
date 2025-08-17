@@ -136,6 +136,17 @@ jobs:
           fi
           exit 0
 
+      - name: Create debian tag with updated changelogs
+        if: steps.flag_changelog_updated.outputs.changelog_updated == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ needs.create_gh_release.outputs.tag_name }}
+        run: |
+          DEBIAN_TAG="${TAG_NAME}-debian"
+          echo "Creating debian tag: ${DEBIAN_TAG}"
+          git tag "${DEBIAN_TAG}"
+          git push origin "${DEBIAN_TAG}"
+
   build_and_upload_source_archive:
     name: Build and Upload Source Archive
     runs-on: ubuntu-latest
@@ -198,6 +209,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.create_gh_release.outputs.tag_name }}-debian
 
       - name: Set up QEMU (for ARM builds)
         if: matrix.arch == 'arm64' || matrix.arch == 'armhf'
