@@ -1,5 +1,6 @@
 device_name: "CM5-CEC-Bridge"
 cec_version: "1.4"        # CEC version: 1.3, 1.4, or 2.0
+log_level: "info"         # Log level: trace, debug, info, warn, error
 mappings:
   # Example usages (supported syntaxes):
   # "CTRL[c], enter"  -> press Ctrl+C, then press Enter

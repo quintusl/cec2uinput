@@ -9,13 +9,78 @@ use std::path::PathBuf;
 use clap::Parser;
 use cec_rs::{CecConnectionCfgBuilder, CecDeviceType, CecDeviceTypeVec, CecKeypress, CecUserControlCode};
 use std::ffi::CString;
+use log::{debug, info, warn, error};
 
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
+#[command(
+    author = "CEC2UInput Contributors",
+    version,
+    about = "CEC to uinput bridge for converting CEC remote events to keyboard/mouse input",
+    long_about = "CEC2UInput bridges Consumer Electronics Control (CEC) remote control events \
+to Linux uinput keyboard and mouse events. This allows you to use your TV remote \
+to control applications on your Raspberry Pi or other Linux devices.
+
+The application reads CEC events from HDMI-connected devices and translates them \
+into configurable keyboard actions and mouse movements based on your configuration file.
+
+EXAMPLES:
+    cec2uinput                          # Use default config.yml with info logging
+    cec2uinput -c /path/to/custom.yml   # Use custom configuration file
+    cec2uinput -l debug                 # Enable debug logging for troubleshooting
+    cec2uinput -q                       # Run silently (no console output)
+    cec2uinput -l error -c custom.yml   # Error-only logging with custom config
+
+CONFIGURATION:
+    The configuration file (default: config.yml) defines:
+    - Device name and CEC settings
+    - Key mappings from CEC buttons to keyboard/mouse actions
+    - Log level (can be overridden by -l flag)
+    
+    See the example config.yml for mapping syntax and available actions.
+
+REQUIREMENTS:
+    - Linux system with uinput support
+    - libcec development packages installed
+    - Root privileges (for uinput device creation)
+    - CEC-capable HDMI hardware"
+)]
 struct Args {
-    /// Path to the configuration file
-    #[arg(short, long, value_name = "FILE")]
+    /// Path to the configuration file (default: config.yml)
+    /// 
+    /// Specifies the YAML configuration file containing device settings
+    /// and CEC button to keyboard/mouse action mappings
+    #[arg(
+        short,
+        long,
+        value_name = "FILE",
+        help = "Path to configuration file"
+    )]
     config: Option<PathBuf>,
+
+    /// Set logging verbosity level
+    /// 
+    /// Controls the amount of diagnostic information displayed.
+    /// Levels: error (minimal), warn, info (default), debug, trace (maximum)
+    /// Command line setting overrides config file log_level
+    #[arg(
+        short,
+        long,
+        value_name = "LEVEL",
+        help = "Log level: error, warn, info, debug, trace"
+    )]
+    log_level: Option<String>,
+
+    /// Suppress all console output
+    /// 
+    /// Enables quiet mode where no messages are printed to console.
+    /// Useful for running as a background service or daemon.
+    /// Overrides any log level settings
+    #[arg(
+        short,
+        long,
+        help = "Run silently with no console output"
+    )]
+    quiet: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -25,6 +90,8 @@ struct Config {
     physical_address: u16,
     #[serde(default = "default_cec_version")]
     cec_version: String,
+    #[serde(default = "default_log_level")]
+    log_level: String,
     mappings: HashMap<String, String>,
 }
 
@@ -36,26 +103,70 @@ fn default_cec_version() -> String {
     "1.4".to_string()
 }
 
+fn default_log_level() -> String {
+    "info".to_string()
+}
+
+fn init_logging(level: &str, quiet: bool) -> Result<()> {
+    if quiet {
+        // In quiet mode, suppress all output including logs
+        env_logger::Builder::from_default_env()
+            .filter_level(log::LevelFilter::Off)
+            .init();
+        return Ok(());
+    }
+    
+    let log_level = match level.to_lowercase().as_str() {
+        "trace" => log::LevelFilter::Trace,
+        "debug" => log::LevelFilter::Debug,
+        "info" => log::LevelFilter::Info,
+        "warn" => log::LevelFilter::Warn,
+        "error" => log::LevelFilter::Error,
+        _ => {
+            if !quiet {
+                eprintln!("Invalid log level '{}', using 'info' instead", level);
+            }
+            log::LevelFilter::Info
+        }
+    };
+    
+    env_logger::Builder::from_default_env()
+        .filter_level(log_level)
+        .format_timestamp_secs()
+        .init();
+    
+    Ok(())
+}
+
 #[cfg(target_os = "linux")]
 fn main() -> Result<()> {
     let args = Args::parse();
 
+    // Initialize logging
+    let log_level = args.log_level.as_deref().unwrap_or("info");
+    init_logging(log_level, args.quiet)?;
+
     let config_path = args.config.unwrap_or_else(|| {
         let default_path = PathBuf::from("config.yml");
-        println!("No config file specified, using default: {}", default_path.display());
+        info!("No config file specified, using default: {}", default_path.display());
         default_path
     });
 
     let file = File::open(&config_path)?;
     let config: Config = serde_yaml_ng::from_reader(file)?;
 
-    println!("Initializing CEC with device name: {}", config.device_name);
+    // Override logging level with config if command line not provided
+    if args.log_level.is_none() {
+        init_logging(&config.log_level, args.quiet)?;
+    }
+
+    info!("Initializing CEC with device name: {}", config.device_name);
 
     // Create a channel for handling keypress events
     let (tx, rx) = std::sync::mpsc::channel::<CecKeypress>();
 
     // Configure CEC connection with enhanced Raspberry Pi CM5 compatibility
-    println!("Configuring CEC with physical address: 0x{:04x}, version: {}",
+    debug!("Configuring CEC with physical address: 0x{:04x}, version: {}",
              config.physical_address, config.cec_version);
 
     // Try different CEC ports - CM5 has multiple CEC devices
@@ -63,13 +174,13 @@ fn main() -> Result<()> {
     let mut cec_connection = None;
 
     for port in &cec_ports {
-        println!("Trying CEC port: {}", port);
+        debug!("Trying CEC port: {}", port);
 
         let key_press_callback = {
             let tx = tx.clone();
             Box::new(move |keypress: CecKeypress| {
                 if let Err(e) = tx.send(keypress) {
-                    eprintln!("Failed to send keypress: {}", e);
+                    error!("Failed to send keypress: {}", e);
                 }
             })
         };
@@ -86,18 +197,18 @@ fn main() -> Result<()> {
             Ok(cfg) => {
                 match cfg.open() {
                     Ok(conn) => {
-                        println!("Successfully connected to CEC via port: {}", port);
+                        info!("Successfully connected to CEC via port: {}", port);
                         cec_connection = Some(conn);
                         break;
                     }
                     Err(e) => {
-                        println!("Failed to open CEC connection on port {}: {:?}", port, e);
+                        warn!("Failed to open CEC connection on port {}: {:?}", port, e);
                         continue;
                     }
                 }
             }
             Err(e) => {
-                println!("Failed to build CEC configuration for port {}: {:?}", port, e);
+                warn!("Failed to build CEC configuration for port {}: {:?}", port, e);
                 continue;
             }
         }
@@ -105,25 +216,25 @@ fn main() -> Result<()> {
 
     let _cec_connection = match cec_connection {
         Some(conn) => {
-            println!("CEC connection established successfully");
+            info!("CEC connection established successfully");
             // Wait a moment for CEC to initialize properly
             std::thread::sleep(std::time::Duration::from_millis(500));
             conn
         }
         None => {
-            eprintln!("Failed to connect to any CEC port");
-            eprintln!("Common causes on Raspberry Pi CM5:");
-            eprintln!("1. Missing libcec development packages (try: sudo apt-get install libcec-dev)");
-            eprintln!("2. CEC hardware not properly detected - check 'dmesg | grep cec'");
-            eprintln!("3. Driver conflicts (try: 'sudo modprobe cec' or check /dev/cec*)");
-            eprintln!("4. Run 'cec-client -l' to check available adapters");
-            eprintln!("5. For CM5 dual HDMI, try specifying port: 'RPI:0' or 'RPI:1'");
-            eprintln!("6. Ensure user has permission to access CEC device (add to 'video' group)");
-            eprintln!("7. Check if another process is using the CEC adapter");
-            eprintln!("8. Make sure 'hdmi_ignore_cec_init=1' is NOT set in /boot/config.txt");
-            eprintln!("9. Try 'sudo systemctl stop cec' if cec service is running");
-            eprintln!("10. Verify physical address in config matches your HDMI setup");
-            eprintln!("11. Check CEC topology with 'cec-ctl --show-topology'");
+            error!("Failed to connect to any CEC port");
+            error!("Common causes on Raspberry Pi CM5:");
+            error!("1. Missing libcec development packages (try: sudo apt-get install libcec-dev)");
+            error!("2. CEC hardware not properly detected - check 'dmesg | grep cec'");
+            error!("3. Driver conflicts (try: 'sudo modprobe cec' or check /dev/cec*)");
+            error!("4. Run 'cec-client -l' to check available adapters");
+            error!("5. For CM5 dual HDMI, try specifying port: 'RPI:0' or 'RPI:1'");
+            error!("6. Ensure user has permission to access CEC device (add to 'video' group)");
+            error!("7. Check if another process is using the CEC adapter");
+            error!("8. Make sure 'hdmi_ignore_cec_init=1' is NOT set in /boot/config.txt");
+            error!("9. Try 'sudo systemctl stop cec' if cec service is running");
+            error!("10. Verify physical address in config matches your HDMI setup");
+            error!("11. Check CEC topology with 'cec-ctl --show-topology'");
             anyhow::bail!("Failed to initialize CEC on any available port");
         }
     };
@@ -134,7 +245,7 @@ fn main() -> Result<()> {
         { linux::UInputDevice::new(&config)? }
     };
 
-    println!("CEC2UInput bridge started. Listening for CEC events...");
+    info!("CEC2UInput bridge started. Listening for CEC events...");
 
     loop {
         // Wait for keypress events from the callback
@@ -254,16 +365,16 @@ fn main() -> Result<()> {
 
                     // Unknown or unhandled
                     CecUserControlCode::Unknown => {
-                        println!("Unknown CEC key code received");
+                        warn!("Unknown CEC key code received");
                         continue;
                     }
                 };
 
                 if let Some(keyboard_event) = config.mappings.get(cec_event) {
-                    println!("Mapping CEC event '{}' to input event '{}'", cec_event, keyboard_event);
+                    debug!("Mapping CEC event '{}' to input event '{}'", cec_event, keyboard_event);
                     device.send_key(keyboard_event)?;
                 } else {
-                    println!("No mapping found for CEC event: {}", cec_event);
+                    warn!("No mapping found for CEC event: {}", cec_event);
                 }
             }
         }
@@ -274,5 +385,5 @@ fn main() -> Result<()> {
 
 #[cfg(not(target_os = "linux"))]
 fn main() {
-    println!("This application is only supported on Linux.");
+    eprintln!("This application is only supported on Linux.");
 }

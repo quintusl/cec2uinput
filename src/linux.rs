@@ -4,6 +4,7 @@ use mouse_keyboard_input::key_codes::*;
 use crate::Config;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
+use log::{debug, warn};
 
 pub struct UInputDevice {
     device: VirtualDevice,
@@ -20,7 +21,7 @@ impl UInputDevice {
 
     pub fn send_key(&mut self, action: &str) -> Result<()> {
         // New parser that supports sequences (comma-separated), bracketed lists, and simultaneous keys (+)
-        println!("Sending key: {}", action);
+        debug!("Sending key: {}", action);
         let s = action.trim();
         // Split top-level sequence items by ',' (e.g. "CTRL[c], enter")
         for part in s.split(',').map(|p| p.trim()).filter(|p| !p.is_empty()) {
@@ -44,12 +45,12 @@ impl UInputDevice {
                             if let Some(k) = Self::key_from_name(sub) {
                                 self.device.click(k).map_err(|e| anyhow::anyhow!("{}", e))?;
                             } else {
-                                println!("Unknown action: {}", sub);
+                                warn!("Unknown action: {}", sub);
                             }
                         }
                         self.device.release(mod_key).map_err(|e| anyhow::anyhow!("{}", e))?;
                     } else {
-                        println!("Unknown modifier: {}", mod_name);
+                        warn!("Unknown modifier: {}", mod_name);
                     }
                     continue;
                 }
@@ -66,7 +67,7 @@ impl UInputDevice {
                     } else if let Some(k) = Self::key_from_name(tok) {
                         others.push(k);
                     } else {
-                        println!("Unknown action: {}", tok);
+                        warn!("Unknown action: {}", tok);
                     }
                 }
                 // press modifiers
@@ -82,7 +83,7 @@ impl UInputDevice {
             if let Some(k) = Self::key_from_name(&part) {
                 self.device.click(k).map_err(|e| anyhow::anyhow!("{}", e))?;
             } else {
-                println!("Unknown action: {}", part);
+                warn!("Unknown action: {}", part);
             }
         }
 
@@ -145,7 +146,7 @@ impl UInputDevice {
                 self.device.click(BTN_RIGHT).map_err(|e| anyhow::anyhow!("{}", e))?;
             }
             _ => {
-                println!("Unknown mouse action: {}", action);
+                warn!("Unknown mouse action: {}", action);
             }
         }
 
