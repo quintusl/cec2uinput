@@ -1,7 +1,4 @@
 device_name: "CM5-CEC-Bridge"
-vendor_id: 0x046d
-product_id: 0xc52b
-physical_address: 0x1000  # HDMI port 1 (0x1000), port 2 (0x2000), etc.
 cec_version: "1.4"        # CEC version: 1.3, 1.4, or 2.0
 mappings:
   # Example usages (supported syntaxes):
@@ -11,12 +8,12 @@ mappings:
   # You can use aliases like: del, ins, pgup, pgdown, return, spacebar
 
   # Basic Navigation
-  Up: "up"            # CEC Up button -> Up arrow key
-  Down: "down"        # CEC Down button -> Down arrow key
-  Left: "left"        # CEC Left button -> Left arrow key
-  Right: "right"      # CEC Right button -> Right arrow key
-  Select: "enter"     # CEC Select button -> Enter key
-  Exit: "esc"         # CEC Exit button -> Escape key
+  Up: "mount_up"               # CEC Up button -> Up arrow key
+  Down: "mount_down"           # CEC Down button -> Down arrow key
+  Left: "mount_left"           # CEC Left button -> Left arrow key
+  Right: "mount_right"         # CEC Right button -> Right arrow key
+  Select: "mouse_click_left"   # CEC Select button -> Enter key
+  Exit: "esc"                  # CEC Exit button -> Escape key
 
   # Color Buttons
   F2Red: "f1"         # CEC Red button -> F1 key

@@ -21,8 +21,6 @@ struct Args {
 #[derive(Debug, Deserialize)]
 struct Config {
     device_name: String,
-    vendor_id: u16,
-    product_id: u16,
     #[serde(default = "default_physical_address")]
     physical_address: u16,
     #[serde(default = "default_cec_version")]
@@ -262,7 +260,7 @@ fn main() -> Result<()> {
                 };
 
                 if let Some(keyboard_event) = config.mappings.get(cec_event) {
-                    println!("Mapping CEC event '{}' to keyboard event '{}'", cec_event, keyboard_event);
+                    println!("Mapping CEC event '{}' to input event '{}'", cec_event, keyboard_event);
                     device.send_key(keyboard_event)?;
                 } else {
                     println!("No mapping found for CEC event: {}", cec_event);

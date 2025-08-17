@@ -1,28 +1,20 @@
 use anyhow::Result;
-use uinput::event::{keyboard, relative};
-use uinput::event::controller::Controller;
+use mouse_keyboard_input::VirtualDevice;
+use mouse_keyboard_input::key_codes::*;
 use crate::Config;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 pub struct UInputDevice {
-    device: uinput::Device,
+    device: VirtualDevice,
     // counters for exponential mouse movement per axis+direction (keys like "x+", "x-", "y+", "y-")
     move_counters: HashMap<String, u8>,
     last_move: Option<Instant>,
 }
 
 impl UInputDevice {
-    pub fn new(config: &Config) -> Result<Self> {
-        let device = uinput::default()?
-            .name(&config.device_name)?
-            .vendor(config.vendor_id)
-            .product(config.product_id)
-            .event(uinput::event::Keyboard::All)?
-            .event(uinput::event::Controller::All)?
-            .event(relative::Position::X)?
-            .event(relative::Position::Y)?
-            .create()?;
+    pub fn new(_config: &Config) -> Result<Self> {
+        let device = VirtualDevice::default().map_err(|e| anyhow::anyhow!("{}", e))?;
         Ok(Self { device, move_counters: HashMap::new(), last_move: None })
     }
 
@@ -47,15 +39,15 @@ impl UInputDevice {
                     let inner = &part[idx + 1..part.len() - 1];
                     // Hold modifier across the whole bracketed list (press once, send all keys, release once)
                     if let Some(mod_key) = Self::modifier_key(mod_name) {
-                        self.device.press(&mod_key)?;
+                        self.device.press(mod_key).map_err(|e| anyhow::anyhow!("{}", e))?;
                         for sub in inner.split(',').map(|x| x.trim()).filter(|x| !x.is_empty()) {
                             if let Some(k) = Self::key_from_name(sub) {
-                                self.device.click(&k)?;
+                                self.device.click(k).map_err(|e| anyhow::anyhow!("{}", e))?;
                             } else {
                                 println!("Unknown action: {}", sub);
                             }
                         }
-                        self.device.release(&mod_key)?;
+                        self.device.release(mod_key).map_err(|e| anyhow::anyhow!("{}", e))?;
                     } else {
                         println!("Unknown modifier: {}", mod_name);
                     }
@@ -66,8 +58,8 @@ impl UInputDevice {
             // Handle simultaneous keys with '+', e.g. "ctrl+alt+del"
             if part.contains('+') {
                 let tokens: Vec<&str> = part.split('+').map(|t| t.trim()).filter(|t| !t.is_empty()).collect();
-                let mut mods: Vec<keyboard::Key> = Vec::new();
-                let mut others: Vec<keyboard::Key> = Vec::new();
+                let mut mods: Vec<u16> = Vec::new();
+                let mut others: Vec<u16> = Vec::new();
                 for tok in tokens {
                     if let Some(mk) = Self::modifier_key(tok) {
                         mods.push(mk);
@@ -78,24 +70,22 @@ impl UInputDevice {
                     }
                 }
                 // press modifiers
-                for mk in &mods { self.device.press(mk)?; }
+                for mk in &mods { self.device.press(*mk).map_err(|e| anyhow::anyhow!("{}", e))?; }
                 // press other keys while modifiers are held
-                for k in &others { self.device.click(k)?; }
+                for k in &others { self.device.click(*k).map_err(|e| anyhow::anyhow!("{}", e))?; }
                 // release modifiers
-                for mk in &mods { self.device.release(mk)?; }
+                for mk in &mods { self.device.release(*mk).map_err(|e| anyhow::anyhow!("{}", e))?; }
                 continue;
             }
 
             // Default: single key name
             if let Some(k) = Self::key_from_name(&part) {
-                self.device.click(&k)?;
+                self.device.click(k).map_err(|e| anyhow::anyhow!("{}", e))?;
             } else {
                 println!("Unknown action: {}", part);
             }
         }
 
-        // synchronize once after the sequence
-        self.device.synchronize()?;
         Ok(())
     }
 
@@ -122,7 +112,7 @@ impl UInputDevice {
                 if *cnt < steps.len() as u8 { *cnt += 1; }
                 let idx = (*cnt as usize).saturating_sub(1).min(steps.len() - 1);
                 let delta = steps[idx] as i32;
-                self.device.position(&relative::Position::X, delta)?;
+                self.device.move_mouse(delta, 0).map_err(|e| anyhow::anyhow!("{}", e))?;
             }
             "mouse_left" => {
                 let key = "x-".to_string();
@@ -130,154 +120,153 @@ impl UInputDevice {
                 if *cnt < steps.len() as u8 { *cnt += 1; }
                 let idx = (*cnt as usize).saturating_sub(1).min(steps.len() - 1);
                 let delta = -(steps[idx] as i32);
-                self.device.position(&relative::Position::X, delta)?;
+                self.device.move_mouse(delta, 0).map_err(|e| anyhow::anyhow!("{}", e))?;
             }
-            "mouse_down" => {
+            "mouse_up" => {
                 let key = "y+".to_string();
                 let cnt = self.move_counters.entry(key.clone()).or_insert(0);
                 if *cnt < steps.len() as u8 { *cnt += 1; }
                 let idx = (*cnt as usize).saturating_sub(1).min(steps.len() - 1);
                 let delta = steps[idx] as i32;
-                self.device.position(&relative::Position::Y, delta)?;
+                self.device.move_mouse(0, delta).map_err(|e| anyhow::anyhow!("{}", e))?;
             }
-            "mouse_up" => {
+            "mouse_down" => {
                 let key = "y-".to_string();
                 let cnt = self.move_counters.entry(key.clone()).or_insert(0);
                 if *cnt < steps.len() as u8 { *cnt += 1; }
                 let idx = (*cnt as usize).saturating_sub(1).min(steps.len() - 1);
                 let delta = -(steps[idx] as i32);
-                self.device.position(&relative::Position::Y, delta)?;
+                self.device.move_mouse(0, delta).map_err(|e| anyhow::anyhow!("{}", e))?;
             }
             "mouse_click_left" | "mouse_left_click" | "mouse_lclick" => {
-                self.device.click(&Controller::Mouse(uinput::event::controller::Mouse::Left))?;
+                self.device.click(BTN_LEFT).map_err(|e| anyhow::anyhow!("{}", e))?;
             }
             "mouse_click_right" | "mouse_right_click" | "mouse_rclick" => {
-                self.device.click(&Controller::Mouse(uinput::event::controller::Mouse::Right))?;
+                self.device.click(BTN_RIGHT).map_err(|e| anyhow::anyhow!("{}", e))?;
             }
             _ => {
                 println!("Unknown mouse action: {}", action);
             }
         }
 
-        self.device.synchronize()?;
         Ok(())
     }
 
     // Helper: map modifier names to keys
-    fn modifier_key(name: &str) -> Option<keyboard::Key> {
+    fn modifier_key(name: &str) -> Option<u16> {
         match name.trim() {
-            "ctrl" | "control" | "lctrl" | "leftctrl" => Some(keyboard::Key::LeftControl),
-            "rctrl" | "rightctrl" => Some(keyboard::Key::RightControl),
-            "alt" | "lalt" | "leftalt" => Some(keyboard::Key::LeftAlt),
-            "ralt" | "rightalt" => Some(keyboard::Key::RightAlt),
-            "shift" | "lshift" | "leftshift" => Some(keyboard::Key::LeftShift),
-            "rshift" | "rightshift" => Some(keyboard::Key::RightShift),
-            "meta" | "super" | "lmeta" | "leftmeta" => Some(keyboard::Key::LeftMeta),
-            "rmeta" | "rightmeta" => Some(keyboard::Key::RightMeta),
+            "ctrl" | "control" | "lctrl" | "leftctrl" => Some(KEY_LEFTCTRL),
+            "rctrl" | "rightctrl" => Some(KEY_RIGHTCTRL),
+            "alt" | "lalt" | "leftalt" => Some(KEY_LEFTALT),
+            "ralt" | "rightalt" => Some(KEY_RIGHTALT),
+            "shift" | "lshift" | "leftshift" => Some(KEY_LEFTSHIFT),
+            "rshift" | "rightshift" => Some(KEY_RIGHTSHIFT),
+            "meta" | "super" | "lmeta" | "leftmeta" => Some(KEY_LEFTMETA),
+            "rmeta" | "rightmeta" => Some(KEY_RIGHTMETA),
             _ => None,
         }
     }
 
-    // Helper: map name strings to keyboard::Key (extracted from previous single-key match)
-    fn key_from_name(action: &str) -> Option<keyboard::Key> {
+    // Helper: map name strings to key codes (extracted from previous single-key match)
+    fn key_from_name(action: &str) -> Option<u16> {
         match action.trim() {
             // Navigation
-            "select" | "enter" => Some(keyboard::Key::Enter),
-            "exit" | "esc" => Some(keyboard::Key::Esc),
-            "up" => Some(keyboard::Key::Up),
-            "down" => Some(keyboard::Key::Down),
-            "left" => Some(keyboard::Key::Left),
-            "right" => Some(keyboard::Key::Right),
-            "home" => Some(keyboard::Key::Home),
-            "pageup" => Some(keyboard::Key::PageUp),
-            "pagedown" => Some(keyboard::Key::PageDown),
-            "end" => Some(keyboard::Key::End),
-            "tab" => Some(keyboard::Key::Tab),
-            "backspace" => Some(keyboard::Key::BackSpace),
-            "delete" => Some(keyboard::Key::Delete),
-            "insert" => Some(keyboard::Key::Insert),
+            "select" | "enter" => Some(KEY_ENTER),
+            "exit" | "esc" => Some(KEY_ESC),
+            "up" => Some(KEY_UP),
+            "down" => Some(KEY_DOWN),
+            "left" => Some(KEY_LEFT),
+            "right" => Some(KEY_RIGHT),
+            "home" => Some(KEY_HOME),
+            "pageup" => Some(KEY_PAGEUP),
+            "pagedown" => Some(KEY_PAGEDOWN),
+            "end" => Some(KEY_END),
+            "tab" => Some(KEY_TAB),
+            "backspace" => Some(KEY_BACKSPACE),
+            "delete" => Some(KEY_DELETE),
+            "insert" => Some(KEY_INSERT),
 
             // Function keys
-            "f1" => Some(keyboard::Key::F1),
-            "f2" => Some(keyboard::Key::F2),
-            "f3" => Some(keyboard::Key::F3),
-            "f4" => Some(keyboard::Key::F4),
-            "f5" => Some(keyboard::Key::F5),
-            "f6" => Some(keyboard::Key::F6),
-            "f7" => Some(keyboard::Key::F7),
-            "f8" => Some(keyboard::Key::F8),
-            "f9" => Some(keyboard::Key::F9),
-            "f10" => Some(keyboard::Key::F10),
-            "f11" => Some(keyboard::Key::F11),
-            "f12" => Some(keyboard::Key::F12),
+            "f1" => Some(KEY_F1),
+            "f2" => Some(KEY_F2),
+            "f3" => Some(KEY_F3),
+            "f4" => Some(KEY_F4),
+            "f5" => Some(KEY_F5),
+            "f6" => Some(KEY_F6),
+            "f7" => Some(KEY_F7),
+            "f8" => Some(KEY_F8),
+            "f9" => Some(KEY_F9),
+            "f10" => Some(KEY_F10),
+            "f11" => Some(KEY_F11),
+            "f12" => Some(KEY_F12),
 
             // Numbers
-            "0" => Some(keyboard::Key::_0),
-            "1" => Some(keyboard::Key::_1),
-            "2" => Some(keyboard::Key::_2),
-            "3" => Some(keyboard::Key::_3),
-            "4" => Some(keyboard::Key::_4),
-            "5" => Some(keyboard::Key::_5),
-            "6" => Some(keyboard::Key::_6),
-            "7" => Some(keyboard::Key::_7),
-            "8" => Some(keyboard::Key::_8),
-            "9" => Some(keyboard::Key::_9),
+            "0" => Some(KEY_10),
+            "1" => Some(KEY_1),
+            "2" => Some(KEY_2),
+            "3" => Some(KEY_3),
+            "4" => Some(KEY_4),
+            "5" => Some(KEY_5),
+            "6" => Some(KEY_6),
+            "7" => Some(KEY_7),
+            "8" => Some(KEY_8),
+            "9" => Some(KEY_9),
 
             // Special keys
-            "space" => Some(keyboard::Key::Space),
-            "spacebar" => Some(keyboard::Key::Space),
-            "dot" => Some(keyboard::Key::Dot),
-            "comma" => Some(keyboard::Key::Comma),
-            "minus" => Some(keyboard::Key::Minus),
-            "equal" => Some(keyboard::Key::Equal),
-            "slash" => Some(keyboard::Key::Slash),
-            "backslash" => Some(keyboard::Key::BackSlash),
-            "semicolon" => Some(keyboard::Key::SemiColon),
-            "apostrophe" => Some(keyboard::Key::Apostrophe),
-            "leftbrace" => Some(keyboard::Key::LeftBrace),
-            "rightbrace" => Some(keyboard::Key::RightBrace),
-            "grave" => Some(keyboard::Key::Grave),
+            "space" => Some(KEY_SPACE),
+            "spacebar" => Some(KEY_SPACE),
+            "dot" => Some(KEY_DOT),
+            "comma" => Some(KEY_COMMA),
+            "minus" => Some(KEY_MINUS),
+            "equal" => Some(KEY_EQUAL),
+            "slash" => Some(KEY_SLASH),
+            "backslash" => Some(KEY_BACKSLASH),
+            "semicolon" => Some(KEY_SEMICOLON),
+            "apostrophe" => Some(KEY_APOSTROPHE),
+            "leftbrace" => Some(KEY_LEFTBRACE),
+            "rightbrace" => Some(KEY_RIGHTBRACE),
+            "grave" => Some(KEY_GRAVE),
 
             // Letters
-            "a" => Some(keyboard::Key::A),
-            "b" => Some(keyboard::Key::B),
-            "c" => Some(keyboard::Key::C),
-            "d" => Some(keyboard::Key::D),
-            "e" => Some(keyboard::Key::E),
-            "f" => Some(keyboard::Key::F),
-            "g" => Some(keyboard::Key::G),
-            "h" => Some(keyboard::Key::H),
-            "i" => Some(keyboard::Key::I),
-            "j" => Some(keyboard::Key::J),
-            "k" => Some(keyboard::Key::K),
-            "l" => Some(keyboard::Key::L),
-            "m" => Some(keyboard::Key::M),
-            "n" => Some(keyboard::Key::N),
-            "o" => Some(keyboard::Key::O),
-            "p" => Some(keyboard::Key::P),
-            "q" => Some(keyboard::Key::Q),
-            "r" => Some(keyboard::Key::R),
-            "s" => Some(keyboard::Key::S),
-            "t" => Some(keyboard::Key::T),
-            "u" => Some(keyboard::Key::U),
-            "v" => Some(keyboard::Key::V),
-            "w" => Some(keyboard::Key::W),
-            "x" => Some(keyboard::Key::X),
-            "y" => Some(keyboard::Key::Y),
-            "z" => Some(keyboard::Key::Z),
+            "a" => Some(KEY_A),
+            "b" => Some(KEY_B),
+            "c" => Some(KEY_C),
+            "d" => Some(KEY_D),
+            "e" => Some(KEY_E),
+            "f" => Some(KEY_F),
+            "g" => Some(KEY_G),
+            "h" => Some(KEY_H),
+            "i" => Some(KEY_I),
+            "j" => Some(KEY_J),
+            "k" => Some(KEY_K),
+            "l" => Some(KEY_L),
+            "m" => Some(KEY_M),
+            "n" => Some(KEY_N),
+            "o" => Some(KEY_O),
+            "p" => Some(KEY_P),
+            "q" => Some(KEY_Q),
+            "r" => Some(KEY_R),
+            "s" => Some(KEY_S),
+            "t" => Some(KEY_T),
+            "u" => Some(KEY_U),
+            "v" => Some(KEY_V),
+            "w" => Some(KEY_W),
+            "x" => Some(KEY_X),
+            "y" => Some(KEY_Y),
+            "z" => Some(KEY_Z),
 
             // Arrow keys (alternative names)
-            "arrow_up" => Some(keyboard::Key::Up),
-            "arrow_down" => Some(keyboard::Key::Down),
-            "arrow_left" => Some(keyboard::Key::Left),
-            "arrow_right" => Some(keyboard::Key::Right),
+            "arrow_up" => Some(KEY_UP),
+            "arrow_down" => Some(KEY_DOWN),
+            "arrow_left" => Some(KEY_LEFT),
+            "arrow_right" => Some(KEY_RIGHT),
 
             // Common aliases
-            "del" => Some(keyboard::Key::Delete),
-            "ins" => Some(keyboard::Key::Insert),
-            "pgup" => Some(keyboard::Key::PageUp),
-            "pgdown" => Some(keyboard::Key::PageDown),
-            "return" => Some(keyboard::Key::Enter),
+            "del" => Some(KEY_DELETE),
+            "ins" => Some(KEY_INSERT),
+            "pgup" => Some(KEY_PAGEUP),
+            "pgdown" => Some(KEY_PAGEDOWN),
+            "return" => Some(KEY_ENTER),
 
             _ => None,
         }
