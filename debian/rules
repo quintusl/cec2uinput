@@ -18,7 +18,11 @@ override_dh_auto_build:
 			"armhf") echo "arm-linux-gnueabihf-gcc" ;; \
 		esac)"; \
 	fi
+ifdef CARGO_BUILD_TARGET
 	cargo build --release --target $(CARGO_BUILD_TARGET)
+else
+	cargo build --release
+endif
 
 override_dh_auto_install:
 	install -d debian/cec2uinput/usr/bin
