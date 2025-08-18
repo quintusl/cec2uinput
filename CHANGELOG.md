@@ -4,6 +4,8 @@
 
 ### Commits
 
+- Fix debian package. (ba2d06b)
+- Update changelogs for release v0.2.1 (b497f69)
 - Change update changelogs to local shell script. (ba26a9d)
 - Update debian/changelog for release v0.2.1 (e15e30e)
 - Update Github actions for Debian. (158da1e)
@@ -15,6 +17,7 @@
 - Update changelog (0f96313)
 - Update CHANGELOG.md (85c2cc6)
 - Update debian/changelog for release v0.2.0 (923a880)
+
 
 
 ## v0.2.0 - 2025-08-16
