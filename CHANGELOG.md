@@ -1,11 +1,11 @@
 # Changelog
 
-## v0.2.1 - 2025-08-17
-
-  Automated release for cec2uinput version 0.2.1.
+## v0.2.1 - 2025-08-18
 
 ### Commits
 
+- Change update changelogs to local shell script. (ba26a9d)
+- Update debian/changelog for release v0.2.1 (e15e30e)
 - Update Github actions for Debian. (158da1e)
 - Update debian/changelog for release v0.2.1 (5cc42eb)
 - Merge branch 'main' of github.com:quintusl/cec2uinput (316cf98)
@@ -16,25 +16,6 @@
 - Update CHANGELOG.md (85c2cc6)
 - Update debian/changelog for release v0.2.0 (923a880)
 
-
-# Changelog
-
-## v0.2.1 - 2025-08-17
-
-  Automated release for cec2uinput version 0.2.1.
-
-### Commits
-
-- Merge branch 'main' of github.com:quintusl/cec2uinput (316cf98)
-- Support configurable log level. (c98d766)
-- Use mouse-keyboard-input crate instead of uinput. (712446f)
-- Fix uinput mouse event handling. (ad9a0b8)
-- Update changelog (0f96313)
-- Update CHANGELOG.md (85c2cc6)
-- Update debian/changelog for release v0.2.0 (923a880)
-
-
-# Changelog
 
 ## v0.2.0 - 2025-08-16
 

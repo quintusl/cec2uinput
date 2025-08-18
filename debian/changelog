@@ -1,5 +1,7 @@
 cec2uinput (0.2.1-1) unstable; urgency=medium
 
+  * Change update changelogs to local shell script.
+  * Update debian/changelog for release v0.2.1
   * Update Github actions for Debian.
   * Update debian/changelog for release v0.2.1
   * Merge branch 'main' of github.com:quintusl/cec2uinput
@@ -10,23 +12,7 @@ cec2uinput (0.2.1-1) unstable; urgency=medium
   * Update CHANGELOG.md
   * Update debian/changelog for release v0.2.0
 
-  Automated release for cec2uinput version 0.2.1.
-
- -- github-actions[bot] <github-actions[bot]@users.noreply.github.com>  Sun, 17 Aug 2025 23:10:44 +0000
-
-cec2uinput (0.2.1-1) unstable; urgency=medium
-
-  * Merge branch 'main' of github.com:quintusl/cec2uinput
-  * Support configurable log level.
-  * Use mouse-keyboard-input crate instead of uinput.
-  * Fix uinput mouse event handling.
-  * Update changelog
-  * Update CHANGELOG.md
-  * Update debian/changelog for release v0.2.0
-
-  Automated release for cec2uinput version 0.2.1.
-
- -- github-actions[bot] <github-actions[bot]@users.noreply.github.com>  Sun, 17 Aug 2025 20:51:46 +0000
+ -- Quintus Leung <quintusl@gmail.com>  Mon, 18 Aug 2025 13:49:58 +0100
 
 cec2uinput (0.2.0-1) unstable; urgency=medium
 
@@ -39,7 +25,7 @@ cec2uinput (0.2.0-1) unstable; urgency=medium
 
   Automated release for cec2uinput version 0.2.0.
 
- -- github-actions[bot] <github-actions[bot]@users.noreply.github.com>  Sat, 16 Aug 2025 23:04:21 +0000
+ -- Quintus Leung <quintusl@gmail.com>  Sat, 16 Aug 2025 23:04:21 +0000
 
 cec2uinput (0.1.2-1) unstable; urgency=medium
 
