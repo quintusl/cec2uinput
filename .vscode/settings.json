@@ -2,6 +2,7 @@
     "cSpell.words": [
         "creatordate",
         "dtolnay",
+        "jtdor",
         "lalt",
         "lclick",
         "lctrl",
@@ -14,6 +15,7 @@
         "lmeta",
         "lshift",
         "mktemp",
+        "noautodbgsym",
         "pgdown",
         "pgup",
         "pipefail",
@@ -28,6 +30,7 @@
         "rmeta",
         "rshift",
         "spacebar",
+        "tlsv",
         "volumemute"
     ]
 }
