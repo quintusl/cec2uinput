@@ -1,5 +1,9 @@
 cec2uinput (0.2.1-1) unstable; urgency=medium
 
+  * Update Github Actions Debian build job.
+  * Fix debian build.
+  * Fix Debian build.
+  * Update changelogs for release v0.2.1
   * Fix debian package.
   * Update changelogs for release v0.2.1
   * Change update changelogs to local shell script.
@@ -14,7 +18,7 @@ cec2uinput (0.2.1-1) unstable; urgency=medium
   * Update CHANGELOG.md
   * Update debian/changelog for release v0.2.0
 
- -- Quintus Leung <quintusl@gmail.com>  Mon, 18 Aug 2025 14:31:10 +0100
+ -- Quintus Leung <quintusl@gmail.com>  Tue, 19 Aug 2025 18:33:27 +0100
 
 cec2uinput (0.2.0-1) unstable; urgency=medium
 

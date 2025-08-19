@@ -1,9 +1,13 @@
 # Changelog
 
-## v0.2.1 - 2025-08-18
+## v0.2.1 - 2025-08-19
 
 ### Commits
 
+- Update Github Actions Debian build job. (2d0fb98)
+- Fix debian build. (61174d2)
+- Fix Debian build. (30f0396)
+- Update changelogs for release v0.2.1 (4547295)
 - Fix debian package. (ba2d06b)
 - Update changelogs for release v0.2.1 (b497f69)
 - Change update changelogs to local shell script. (ba26a9d)
@@ -19,7 +23,6 @@
 - Update debian/changelog for release v0.2.0 (923a880)
 
 
-
 ## v0.2.0 - 2025-08-16
 
   Automated release for cec2uinput version 0.2.0.
@@ -33,8 +36,6 @@
 - Support key modifiers and key sequence. (8d1f13f)
 - Update debian/changelog for release v0.1.2 (328bc6d)
 
-
-# Changelog
 
 ## v0.1.2 - 2025-08-16
 
