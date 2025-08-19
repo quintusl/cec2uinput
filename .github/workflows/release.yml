@@ -96,11 +96,11 @@ jobs:
           - target: aarch64-unknown-linux-gnu
             arch: arm64
             linker: aarch64-linux-gnu-gcc
-            rustflags: '["-C", "target-feature=+crt-static"]'
+            rustflags: '-C linker=aarch64-linux-gnu-gcc'
           - target: armv7-unknown-linux-gnueabihf
             arch: armhf
             linker: '/opt/rpi_tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc'
-            rustflags: '["-C", "target-feature=+crt-static"]'
+            rustflags: '-C linker=/opt/rpi_tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc'
 
     steps:
       - name: Checkout repository
@@ -179,15 +179,20 @@ jobs:
 
       - name: Build Debian package for ${{ matrix.arch }}
         if: matrix.arch != 'armhf' && matrix.arch != 'arm64'
+        env:
+          DEB_HOST_ARCH: ${{ matrix.arch }}
+          RUSTFLAGS: '${{ matrix.rustflags }}'
         run: dpkg-buildpackage -b -d -uc -us --host-arch ${{ matrix.arch }}
 
       - name: Build Debian package for armhf
         if: matrix.arch == 'armhf'
         env:
+          DEB_HOST_ARCH: ${{ matrix.arch }}
           # Set target for cross-compilation
           CARGO_BUILD_TARGET: ${{ matrix.target }}
           # For armhf specifically, ensure we use the right target features
           CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER: 'arm-linux-gnueabihf-gcc'
+          RUSTFLAGS: '${{ matrix.rustflags }}'
           # PKG_CONFIG settings for cross-compilation
           PKG_CONFIG_ALLOW_CROSS: 1
           PKG_CONFIG_PATH: '/usr/lib/arm-linux-gnueabihf/pkgconfig'
@@ -196,11 +201,13 @@ jobs:
       - name: Build Debian package for arm64
         if: matrix.arch == 'arm64'
         env:
+          DEB_HOST_ARCH: ${{ matrix.arch }}
           # Set target for cross-compilation
           CARGO_BUILD_TARGET: ${{ matrix.target }}
           # For armhf specifically, ensure we use the right target features
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: 'aarch64-linux-gnu-gcc'
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: ${{ matrix.linker }}
           # PKG_CONFIG settings for cross-compilation
+          RUSTFLAGS: '${{ matrix.rustflags }}'
           PKG_CONFIG_ALLOW_CROSS: 1
           PKG_CONFIG_PATH: '/usr/lib/aarch64-linux-gnu/pkgconfig'
         run: dpkg-buildpackage -b -d -uc -us --host-arch ${{ matrix.arch }}

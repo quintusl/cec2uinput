@@ -4,20 +4,6 @@
 	dh $@
 
 override_dh_auto_build:
-	# Set Rust flags and target for cross-compilation
-	if [ -n "${DEB_HOST_ARCH}" ]; then \
-		export CARGO_BUILD_TARGET=$$(case "${DEB_HOST_ARCH}" in \
-			"amd64") echo "x86_64-unknown-linux-gnu" ;; \
-			"arm64") echo "aarch64-unknown-linux-gnu" ;; \
-			"armhf") echo "armv7-unknown-linux-gnueabihf" ;; \
-			*) echo "unsupported-architecture" ;; \
-		esac); \
-		export RUSTFLAGS="${RUSTFLAGS} -C linker=$$(case "${DEB_HOST_ARCH}" in \
-			"amd64") echo "gcc" ;; \
-			"arm64") echo "aarch64-linux-gnu-gcc" ;; \
-			"armhf") echo "arm-linux-gnueabihf-gcc" ;; \
-		esac)"; \
-	fi
 ifdef CARGO_BUILD_TARGET
 	cargo build --release --target $(CARGO_BUILD_TARGET)
 else
