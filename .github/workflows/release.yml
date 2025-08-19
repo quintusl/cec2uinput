@@ -109,48 +109,34 @@ jobs:
           host-arch: ${{ matrix.host_arch }}
           buildpackage-opts: --build=binary --no-sign
           before-build-hook: |
-            source /etc/os-release
-            echo "Setting up APT multi-arch sources for $ID $VERSION_CODENAME"
-            cat /etc/apt/sources.list.d/ubuntu.sources \
-            | sed -e 's/Types: deb/Types: deb\nArchitectures: amd64/g' \
-            | tee /etc/apt/sources.list.d/ubuntu.sources
-            cat <<EOF | tee /etc/apt/sources.list.d/ubuntu-ports.sources
-            Types: deb
-            URIs: http://ports.ubuntu.com/ubuntu-ports/
-            Suites: $VERSION_CODENAME $VERSION_CODENAME-updates $VERSION_CODENAME-backports
-            Components: main restricted universe multiverse
-            Architectures: armhf arm64
-            Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-
-            Types: deb
-            URIs: http://security.ports.ubuntu.com/ubuntu-ports/
-            Suites: $VERSION_CODENAME-security
-            Components: main restricted universe multiverse
-            Architectures: armhf arm64
-            Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-
-            EOF
             apt-get update -qq
             apt-get install -y --no-install-recommends curl debhelper-compat rustup pkg-config \
               systemd libstdc++-13-dev libcec-dev libudev-dev
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             source ~/.cargo/env
-            rustup -q default stable
-            rustup -q update
             case "${{ matrix.host_arch }}" in
               "amd64")
+                # add dpkg architecture for amd64
+                apt install -y --no-install-recommends \
+                  debhelper-compat rustup pkg-config gcc-multilib libc6-dev-amd64 \
+                  libstdc++-13-dev-amd64-cross libcec-dev:amd64 libudev-dev:amd64
+                # add rust target for amd64
                 rustup target add x86_64-unknown-linux-gnu
                 ;;
               "arm64")
-                install -y --no-install-recommends \
-                  debhelper-compat rustup pkg-config  gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
+                # add dpkg architecture for arm64
+                apt install -y --no-install-recommends \
+                  debhelper-compat rustup pkg-config gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
                   libstdc++-13-dev-arm64-cross libcec-dev:arm64 libudev-dev:arm64
+                # add rust target for arm64
                 rustup target add aarch64-unknown-linux-gnu
                 ;;
               "armhf")
+                # add dpkg architecture for armhf
                 apt install -y --no-install-recommends \
                   debhelper-compat rustup pkg-config gcc-arm-linux-gnueabihf libc6-dev-armhf-cross \
                   libstdc++-13-dev-armhf-cross libcec-dev:armhf libudev-dev:armhf
+                # add rust target for armhf
                 rustup target add armv7-unknown-linux-gnueabihf
                 ;;
             esac

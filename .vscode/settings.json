@@ -15,6 +15,7 @@
         "lmeta",
         "lshift",
         "mktemp",
+        "multilib",
         "noautodbgsym",
         "pgdown",
         "pgup",
