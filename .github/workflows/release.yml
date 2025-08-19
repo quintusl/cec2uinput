@@ -109,17 +109,20 @@ jobs:
           host-arch: ${{ matrix.host_arch }}
           buildpackage-opts: --build=binary --no-sign
           before-build-hook: |
+            dpkg --add-architecture ${{ matrix.host_arch }}
             apt-get update -qq
             apt-get install -y --no-install-recommends curl debhelper-compat rustup pkg-config \
               systemd libstdc++-13-dev libcec-dev libudev-dev
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            rustup default stable
+            rustup update
             source ~/.cargo/env
             case "${{ matrix.host_arch }}" in
               "amd64")
                 # add dpkg architecture for amd64
                 apt install -y --no-install-recommends \
-                  debhelper-compat rustup pkg-config gcc-multilib libc6-dev-amd64 \
-                  libstdc++-13-dev-amd64-cross libcec-dev:amd64 libudev-dev:amd64
+                  debhelper-compat rustup pkg-config gcc-multilib libc6-dev \
+                  libstdc++-13-dev libcec-dev:amd64 libudev-dev:amd64
                 # add rust target for amd64
                 rustup target add x86_64-unknown-linux-gnu
                 ;;
