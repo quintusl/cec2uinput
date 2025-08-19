@@ -111,7 +111,7 @@ jobs:
           before-build-hook: |
             dpkg --add-architecture ${{ matrix.host_arch }}
             apt-get update -qq
-            apt-get install -y --no-install-recommends curl debhelper-compat rustup pkg-config \
+            apt-get install -y --no-install-recommends curl debhelper-compat pkg-config \
               systemd libstdc++-13-dev libcec-dev libudev-dev
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             rustup default stable
@@ -121,7 +121,7 @@ jobs:
               "amd64")
                 # add dpkg architecture for amd64
                 apt install -y --no-install-recommends \
-                  debhelper-compat rustup pkg-config gcc-multilib libc6-dev \
+                  debhelper-compat pkg-config gcc-multilib libc6-dev \
                   libstdc++-13-dev libcec-dev:amd64 libudev-dev:amd64
                 # add rust target for amd64
                 rustup target add x86_64-unknown-linux-gnu
@@ -129,7 +129,7 @@ jobs:
               "arm64")
                 # add dpkg architecture for arm64
                 apt install -y --no-install-recommends \
-                  debhelper-compat rustup pkg-config gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
+                  debhelper-compat pkg-config gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
                   libstdc++-13-dev-arm64-cross libcec-dev:arm64 libudev-dev:arm64
                 # add rust target for arm64
                 rustup target add aarch64-unknown-linux-gnu
