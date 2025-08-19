@@ -131,7 +131,8 @@ jobs:
 
             EOF
             apt-get update -qq
-            apt-get install -y --no-install-recommends curl sudo debhelper-compat rustup pkg-config systemd-libs libstdc++-13-dev libcec-dev libudev-dev
+            apt-get install -y --no-install-recommends curl sudo debhelper-compat rustup pkg-config \
+              systemd libstdc++-13-dev libcec-dev libudev-dev
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             source ~/.cargo/env
             rustup -q default stable
