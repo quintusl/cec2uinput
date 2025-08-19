@@ -107,7 +107,6 @@ jobs:
           DEB_BUILD_OPTIONS: noautodbgsym
         with:
           host-arch: ${{ matrix.host_arch }}
-          docker-image: ubuntu:22.04
           buildpackage-opts: --build=binary --no-sign
           before-build-hook: |
             source /etc/os-release
