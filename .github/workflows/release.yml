@@ -119,7 +119,7 @@ jobs:
         if: matrix.arch == 'armhf'
         run: |
           sudo apt update -qq
-          sudo apt install -y --no-install-recommends \
+          sudo apt install -y --no-install-recommends crossbuild-essential-armhf \
             gcc-arm-linux-gnueabihf libc6-dev-armhf-cross libstdc++-13-dev-armhf-cross \
             libcec6:${{ matrix.arch }} libcec-dev:${{ matrix.arch }} \
             udev:${{ matrix.arch }} libudev1:${{ matrix.arch }} libudev-dev:${{ matrix.arch }}
@@ -135,7 +135,7 @@ jobs:
           CARGO_BUILD_TARGET: ${{ matrix.target }}
           RUSTFLAGS: '${{ matrix.rustflags }}'
         run: |
-          dpkg-buildpackage -b -d -uc -us --target-arch ${{ matrix.arch }} --build-profiles=release
+          dpkg-buildpackage -b -d -uc -us --host-arch ${{ matrix.arch }} --build-profiles=release
 
       - name: Get package name and path
         id: package_info
