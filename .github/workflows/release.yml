@@ -112,9 +112,10 @@ jobs:
       - name: Install compilation dependencies
         run: |
           sudo apt install -y --no-install-recommends debhelper-compat rustup pkg-config \
-           libstdc++-13-dev libcec-dev libudev-dev systemd
+            ibstdc++-13-dev libcec libcec-dev libudev libudev-dev systemd
           rustup -q default stable
           rustup -q update
+          rustup target add ${{ matrix.target }}
 
       - name: Build Debian package for ${{ matrix.arch }}
         env:
