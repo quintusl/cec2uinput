@@ -34,7 +34,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.get_version.outputs.version }}
         run: |
-          echo gh release create ${{ github.ref_name }} \
+          gh release create ${{ github.ref_name }} \
             --title "  Release ${{ github.ref_name }}" \
             --notes "  Automated release for ${{ env.PKG_NAME }} version ${{ env.VERSION }}." \
             --draft=false \
@@ -96,11 +96,11 @@ jobs:
           - target: aarch64-unknown-linux-gnu
             arch: arm64
             linker: aarch64-linux-gnu-gcc
-            rustflags: '-C linker=aarch64-linux-gnu-gcc'
+            rustflags: '-C target-feature=+crt-static -C linker=aarch64-linux-gnu-gcc'
           - target: armv7-unknown-linux-gnueabihf
             arch: armhf
             linker: '/opt/rpi_tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc'
-            rustflags: '-C linker=/opt/rpi_tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc'
+            rustflags: '-C target-feature=+crt-static -C linker=/opt/rpi_tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc'
 
     steps:
       - name: Checkout repository
