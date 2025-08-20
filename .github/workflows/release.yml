@@ -99,8 +99,8 @@ jobs:
             rustflags: '-C target-feature=+crt-static -C linker=aarch64-linux-gnu-gcc'
           - target: armv7-unknown-linux-gnueabihf
             arch: armhf
-            linker: '/opt/rpi_tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc'
-            rustflags: '-C target-feature=+crt-static -C linker=/opt/rpi_tools/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc'
+            linker: 'arm-linux-gnueabihf-gcc'
+            rustflags: '-C target-feature=+crt-static -C linker=arm-linux-gnueabihf-gcc'
 
     steps:
       - name: Checkout repository
@@ -146,7 +146,7 @@ jobs:
         if: matrix.arch == 'amd64'
         run: |
           sudo apt install -y --no-install-recommends debhelper-compat rustup pkg-config \
-           libstdc++-13-dev libcec-dev libudev-dev systemd-libs
+           libstdc++-13-dev libcec-dev libudev-dev systemd
           rustup -q default stable
           rustup -q update
 
@@ -157,11 +157,9 @@ jobs:
           sudo apt update -qq
           sudo apt install -y --no-install-recommends \
             debhelper-compat rustup pkg-config gcc-arm-linux-gnueabihf libc6-dev-armhf-cross \
-            libstdc++-13-dev-armhf-cross systemd-libs \
+            libstdc++-13-dev-armhf-cross systemd \
             libcec-dev:${{ matrix.arch }} libudev-dev:${{ matrix.arch }}
           mkdir -p /opt
-          # Download and extract Raspberry Pi cross-compilation tools
-          git clone https://github.com/raspberrypi/tools /opt/rpi_tools
           rustup target add ${{ matrix.target }}
           rustup -q default stable
           rustup -q update
@@ -173,7 +171,7 @@ jobs:
           sudo apt update -qq
           sudo apt install -y --no-install-recommends \
             debhelper-compat rustup pkg-config gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
-            libstdc++-13-dev-arm64-cross systemd-libs \
+            libstdc++-13-dev-arm64-cross systemd \
             libcec-dev:${{ matrix.arch }} libudev-dev:${{ matrix.arch }}
           rustup target add ${{ matrix.target }}
           rustup -q default stable
