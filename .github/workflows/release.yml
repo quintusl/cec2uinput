@@ -121,7 +121,8 @@ jobs:
           sudo apt update -qq
           sudo apt install -y --no-install-recommends \
             gcc-arm-linux-gnueabihf libc6-dev-armhf-cross libstdc++-13-dev-armhf-cross \
-            libcec-dev:${{ matrix.arch }} libudev-dev:${{ matrix.arch }}
+            libcec6:${{ matrix.arch }} libcec-dev:${{ matrix.arch }} \
+            udev:${{ matrix.arch }} libudev1:${{ matrix.arch }} libudev-dev:${{ matrix.arch }}
 
       - name: Rust add architectures and update
         run: |
