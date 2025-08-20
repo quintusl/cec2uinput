@@ -102,7 +102,7 @@ jobs:
             arch: armhf
             runner: ubuntu-24.04-arm
             linker: 'arm-linux-gnueabihf-gcc'
-            rustflags: '-C linker=arm-linux-gnueabihf-gcc -C link-arg=-ludev -C link-arg=-lcec"'
+            rustflags: '-C linker=arm-linux-gnueabihf-gcc -C link-arg=-ludev -C link-arg=-lcec'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -113,7 +113,7 @@ jobs:
           sudo apt update -qq
           # Install dependencies for building Debian packages
           sudo apt install -y --no-install-recommends debhelper-compat rustup pkg-config \
-            libstdc++-13-dev libcec6 libcec-dev udev libudev1 libudev-dev \
+            libstdc++-13-dev libcec6 libcec-dev udev libudev1 libudev-dev
 
       - name: Install cross-compilation dependencies (for ARMhf)
         if: matrix.arch == 'armhf'
