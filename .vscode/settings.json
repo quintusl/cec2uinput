@@ -14,6 +14,7 @@
         "libudev",
         "lmeta",
         "lshift",
+        "MAINT",
         "mktemp",
         "multilib",
         "noautodbgsym",
