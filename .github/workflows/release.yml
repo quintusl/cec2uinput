@@ -111,11 +111,25 @@ jobs:
 
       - name: Install compilation dependencies
         run: |
+          sudo dpkg --add-architecture ${{ matrix.arch }}
+          sudo apt update -qq
+          # Install dependencies for building Debian packages
           sudo apt install -y --no-install-recommends debhelper-compat rustup pkg-config \
-            libstdc++-13-dev libcec6 libcec-dev libudev1 libudev-dev
+            libstdc++-13-dev libcec6 libcec-dev udev libudev1 libudev-dev \
+
+      - name: Install cross-compilation dependencies (for ARMhf)
+        if: matrix.arch == 'armhf'
+        run: |
+          sudo apt update -qq
+          sudo apt install -y --no-install-recommends \
+            gcc-arm-linux-gnueabihf libc6-dev-armhf-cross libstdc++-13-dev-armhf-cross \
+            libcec-dev:${{ matrix.arch }} libudev-dev:${{ matrix.arch }}
+
+      - name: Rust add architectures and update
+        run: |
+          rustup target add ${{ matrix.target }}
           rustup -q default stable
           rustup -q update
-          rustup target add ${{ matrix.target }}
 
       - name: Build Debian package for ${{ matrix.arch }}
         env:
