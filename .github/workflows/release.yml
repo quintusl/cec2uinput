@@ -130,7 +130,6 @@ jobs:
           rustup -q update
 
       - name: Build Debian package for ${{ matrix.arch }}
-        if: matrix.arch == 'amd64' || matrix.arch == 'arm64'
         env:
           CARGO_BUILD_TARGET: ${{ matrix.target }}
           RUSTFLAGS: '${{ matrix.rustflags }}'
