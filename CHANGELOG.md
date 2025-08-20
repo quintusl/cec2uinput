@@ -1,15 +1,14 @@
 # Changelog
 
-## v0.2.1 - 2025-08-19
+## v0.2.1 - 2025-08-20
 
 ### Commits
 
+- Fix Debian armhf build. (3c28715)
+- Try ARM Github runner. (07bae66)
+- Fix debian build. (df066d8)
 - Update Github Actions Debian build job. (2d0fb98)
-- Fix debian build. (61174d2)
 - Fix Debian build. (30f0396)
-- Update changelogs for release v0.2.1 (4547295)
-- Fix debian package. (ba2d06b)
-- Update changelogs for release v0.2.1 (b497f69)
 - Change update changelogs to local shell script. (ba26a9d)
 - Update debian/changelog for release v0.2.1 (e15e30e)
 - Update Github actions for Debian. (158da1e)
