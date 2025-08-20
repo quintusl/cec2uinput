@@ -98,12 +98,12 @@ jobs:
             arch: arm64
             runner: ubuntu-24.04-arm
             linker: aarch64-linux-gnu-gcc
-            rustflags: '-C target-feature=+crt-static -C linker=aarch64-linux-gnu-gcc'
+            # rustflags: '-C target-feature=+crt-static -C linker=aarch64-linux-gnu-gcc'
           - target: armv7-unknown-linux-gnueabihf
             arch: armhf
             runner: ubuntu-24.04-arm
             linker: 'arm-linux-gnueabihf-gcc'
-            rustflags: '-C target-feature=+crt-static -C linker=arm-linux-gnueabihf-gcc'
+            # rustflags: '-C target-feature=+crt-static -C linker=arm-linux-gnueabihf-gcc'
 
     steps:
       - name: Checkout repository
@@ -134,7 +134,7 @@ jobs:
       - name: Build Debian package for ${{ matrix.arch }}
         env:
           CARGO_BUILD_TARGET: ${{ matrix.target }}
-          RUSTFLAGS: '${{ matrix.rustflags }}'
+          # RUSTFLAGS: '${{ matrix.rustflags }}'
         run: dpkg-buildpackage -b -d -uc -us --target-arch ${{ matrix.arch }} --build-profiles=release
 
       - name: Get package name and path
