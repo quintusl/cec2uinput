@@ -1,3 +1,10 @@
+cec2uinput (0.2.2-1) unstable; urgency=medium
+
+  * Fix logging initialization.
+  * Update crates and readme.
+
+ -- Quintus Leung <quintusl@gmail.com>  Sat, 23 Aug 2025 17:53:59 +0100
+
 cec2uinput (0.2.1-1) unstable; urgency=medium
 
   * Fix Debian armhf build.

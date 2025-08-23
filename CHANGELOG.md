@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.2 - 2025-08-23
+
+### Commits
+
+- Fix logging initialization. (3f3def9)
+- Update crates and readme. (d31a6d9)
+
+
 ## v0.2.1 - 2025-08-20
 
 ### Commits
