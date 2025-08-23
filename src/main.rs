@@ -35,7 +35,7 @@ CONFIGURATION:
     - Device name and CEC settings
     - Key mappings from CEC buttons to keyboard/mouse actions
     - Log level (can be overridden by -l flag)
-    
+
     See the example config.yml for mapping syntax and available actions.
 
 REQUIREMENTS:
@@ -46,7 +46,7 @@ REQUIREMENTS:
 )]
 struct Args {
     /// Path to the configuration file (default: config.yml)
-    /// 
+    ///
     /// Specifies the YAML configuration file containing device settings
     /// and CEC button to keyboard/mouse action mappings
     #[arg(
@@ -58,7 +58,7 @@ struct Args {
     config: Option<PathBuf>,
 
     /// Set logging verbosity level
-    /// 
+    ///
     /// Controls the amount of diagnostic information displayed.
     /// Levels: error (minimal), warn, info (default), debug, trace (maximum)
     /// Command line setting overrides config file log_level
@@ -72,7 +72,7 @@ struct Args {
     log_level: Option<String>,
 
     /// Suppress all console output
-    /// 
+    ///
     /// Enables quiet mode where no messages are printed to console.
     /// Useful for running as a background service or daemon.
     /// Overrides any log level settings
@@ -116,7 +116,7 @@ fn init_logging(level: &str, quiet: bool) -> Result<()> {
             .init();
         return Ok(());
     }
-    
+
     let log_level = match level.to_lowercase().as_str() {
         "trace" => log::LevelFilter::Trace,
         "debug" => log::LevelFilter::Debug,
@@ -131,12 +131,12 @@ fn init_logging(level: &str, quiet: bool) -> Result<()> {
             log::LevelFilter::Info
         }
     };
-    
+
     env_logger::Builder::from_default_env()
         .filter_level(log_level)
         .format_timestamp_secs()
         .init();
-    
+
     Ok(())
 }
 
@@ -144,7 +144,7 @@ fn init_logging(level: &str, quiet: bool) -> Result<()> {
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    let config_path = args.config.unwrap_or_else(|| {
+    let config_path = args.config.clone().unwrap_or_else(|| {
         let default_path = PathBuf::from("config.yml");
         default_path
     });
