@@ -144,22 +144,20 @@ fn init_logging(level: &str, quiet: bool) -> Result<()> {
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    // Initialize logging
-    let log_level = args.log_level.as_deref().unwrap_or("info");
-    init_logging(log_level, args.quiet)?;
-
     let config_path = args.config.unwrap_or_else(|| {
         let default_path = PathBuf::from("config.yml");
-        info!("No config file specified, using default: {}", default_path.display());
         default_path
     });
 
     let file = File::open(&config_path)?;
     let config: Config = serde_yaml_ng::from_reader(file)?;
 
-    // Override logging level with config if command line not provided
-    if args.log_level.is_none() {
-        init_logging(&config.log_level, args.quiet)?;
+    // Determine log level: command line takes precedence, then config, then default
+    let log_level = args.log_level.as_deref().unwrap_or(&config.log_level);
+    init_logging(log_level, args.quiet)?;
+
+    if args.config.is_none() {
+        info!("No config file specified, using default: {}", config_path.display());
     }
 
     info!("Initializing CEC with device name: {}", config.device_name);
