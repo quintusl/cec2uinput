@@ -1,95 +1,66 @@
 # cec2uinput
 
-A Linux utility that bridges CEC (Consumer Electronics Control) remote control events to Linux uinput keyboard events. This allows you to control Linux applications using your TV remote control via HDMI-CEC.
+A Linux utility that bridges HDMI-CEC (Consumer Electronics Control) remote control events to Linux uinput input events. It maps CEC remote buttons to configurable keyboard and mouse actions so you can control Linux applications with a TV remote.
 
 ## Features
 
-- Receives CEC remote control events from HDMI devices
-- Maps CEC button presses to configurable keyboard actions
-- Uses Linux uinput to generate keyboard events
-- Configurable key mappings via YAML configuration
-- SystemD service integration for automatic startup
-- Prevents duplicate key events by filtering key repeats
-- Automatic detection of CEC adapter
+- Receive CEC remote control events from HDMI devices
+- Map CEC button presses to configurable keyboard and mouse actions
+- Generate virtual keyboard and mouse events via Linux uinput
+- Configurable mappings in `config/config.yml` (YAML)
+- Systemd service integration for automatic startup
+- Filters duplicate key events (ignore CEC key repeat frames)
+- Automatic detection of CEC adapters and multiple fallback ports (including Raspberry Pi ports)
 
 ## Requirements
 
-- Linux operating system
-- HDMI-CEC compatible hardware (TV, receiver, etc.)
-- libcec development libraries
-- Root privileges (required for uinput device access)
+- Linux operating system (the binary only runs on Linux)
+- HDMI-CEC compatible hardware and libcec development libraries
+- Root privileges (or uinput access) to create the virtual input device
 
 ## Installation
 
 ### Prerequisites
 
-Install libcec development packages:
+Install `libcec` development packages for your distribution (examples):
 
 ```bash
-# Ubuntu/Debian
+# Ubuntu / Debian
 sudo apt-get install libcec-dev libcec6
 
-# Fedora/RHEL
+# Fedora / RHEL
 sudo dnf install libcec-devel libcec
 
-# Arch Linux
+# Arch
 sudo pacman -S libcec
 ```
 
-### From Source
+### From source
 
-1. Clone the repository:
 ```bash
 git clone <repository-url>
 cd cec2uinput
-```
-
-2. Build the project:
-```bash
 cargo build --release
-```
-
-3. Install the binary:
-```bash
 sudo cp target/release/cec2uinput /usr/local/bin/
 sudo chmod +x /usr/local/bin/cec2uinput
 ```
 
-### Debian/Ubuntu
-
-1. Build the package:
-```bash
-sudo apt-get install debhelper
-dpkg-buildpackage -us -uc
-```
-
-2. Install the package:
-```bash
-sudo dpkg -i ../cec2uinput_*.deb
-```
-
-### Arch Linux
-
-1. Build the package:
-```bash
-cd AUR
-makepkg -si
-```
+Packaging hints (Debian / Arch) remain available in the repository (see `debian/` and `AUR/`).
 
 ## Configuration
 
-1. Copy the example configuration:
+Copy and edit the example `config/config.yml` to `/etc/cec2uinput/config.yml` (or provide `--config` on the command line):
+
 ```bash
-cp config.yml /etc/cec2uinput/config.yml
+cp config/config.yml /etc/cec2uinput/config.yml
 ```
 
-2. Edit the configuration file:
+Basic example configuration snippet (more examples in `config/config.yml`):
+
 ```yaml
-device_name: "cec2uinput"
-vendor_id: 0x1234
-product_id: 0x5678
-physical_address: 0x1000  # HDMI port 1 (0x1000), port 2 (0x2000), etc.
-cec_version: "1.4"        # CEC version: 1.3, 1.4, or 2.0
+device_name: "CM5-CEC-Bridge"
+cec_version: "1.4"
+log_level: "info"
 mappings:
   Up: "up"
   Down: "down"
@@ -97,173 +68,146 @@ mappings:
   Right: "right"
   Select: "enter"
   Exit: "esc"
-  F1Blue: "f1"
-  F2Red: "f2"
-  F3Green: "f3"
-  F4Yellow: "f4"
   Number0: "0"
   Number1: "1"
-  Number2: "2"
-  Number3: "3"
-  Number4: "4"
-  Number5: "5"
-  Number6: "6"
-  Number7: "7"
-  Number8: "8"
-  Number9: "9"
 ```
 
-### Configuration Options
+### Mouse support and mapping tokens
 
-- `device_name`: Virtual input device name (appears in `/proc/bus/input/devices`)
-- `vendor_id`: USB vendor ID for the virtual device
-- `product_id`: USB product ID for the virtual device
-- `physical_address`: The physical address of the HDMI port. Default is `0x1000` (HDMI port 1).
-- `cec_version`: The CEC version to use. Can be `1.3`, `1.4`, or `2.0`. Default is `1.4`.
-- `mappings`: Map CEC button names to keyboard actions.
+This version adds support for a virtual mouse device. You can map CEC buttons to mouse movements and clicks. Supported mouse mapping tokens (examples):
 
-### Available CEC Button Names
+- `mouse_right` — move cursor right
+- `mouse_left`  — move cursor left
+- `mouse_up`    — move cursor up
+- `mouse_down`  — move cursor down
+- `mouse_click_left` (aliases: `mouse_left_click`, `mouse_lclick`) — left button click
+- `mouse_click_right` (aliases: `mouse_right_click`, `mouse_rclick`) — right button click
 
-A full list of available CEC button names can be found in the `src/main.rs` file.
+Movement behaviour:
 
-### Available Keyboard Actions
+- Repeated mapped movement events accelerate using exponential steps: [1, 10, 50, 100, 500] pixels.
+- Each direction (x+/x-/y+/y-) has its own counter and the counter resets after 500 milliseconds of idle mouse activity.
 
-A full list of available keyboard actions can be found in the `src/linux.rs` file.
+Example mapping that maps the CEC Right button to mouse movement right and Select to left click:
+
+```yaml
+mappings:
+  Right: "mouse_right"
+  Select: "mouse_click_left"
+```
+
+### Configuration options
+
+- `device_name`: Virtual input device name (shown in `/proc/bus/input/devices`)
+- `cec_version`: `1.3`, `1.4`, or `2.0` (default `1.4`)
+- `mappings`: Map CEC button names (see `src/main.rs`) to actions (keyboard or mouse tokens supported)
 
 ## Usage
 
-### Manual Execution
+### Command line arguments
 
-Run the application manually (requires root):
+The binary uses `clap` for comprehensive argument parsing with detailed help. Run `cec2uinput --help` for full documentation.
+
+**Available options:**
+
+- `-c, --config <FILE>` — Path to the YAML configuration file. If omitted, uses `config.yml` from the current working directory.
+- `-l, --log-level <LEVEL>` — Set logging verbosity: `error`, `warn`, `info` (default), `debug`, or `trace`. Overrides config file setting.
+- `-q, --quiet` — Suppress all console output. Useful for running as daemon/service. Overrides any log level settings.
+- `-h, --help` — Show comprehensive help with examples and exit.
+- `-V, --version` — Show version information and exit.
+
+**Examples:**
+
 ```bash
-sudo ./cec2uinput
+# Use default config.yml with info logging
+sudo cec2uinput
+
+# Use custom configuration file
+sudo cec2uinput -c /etc/cec2uinput/config.yml
+
+# Enable debug logging for troubleshooting
+sudo cec2uinput -l debug
+
+# Run silently (no console output)
+sudo cec2uinput -q
+
+# Combine options: error-only logging with custom config
+sudo cec2uinput -l error -c /path/to/custom.yml
 ```
 
-### SystemD Service
+### Manual run
 
-1. Install the service file:
+Run the binary (requires root privileges for uinput device access):
+
 ```bash
-sudo cp cec2uinput.service /etc/systemd/system/
+# Basic run with default config.yml
+sudo cec2uinput
+
+# With custom config and debug logging
+sudo cec2uinput -c /etc/cec2uinput/config.yml -l debug
 ```
 
-2. Enable and start the service:
-```bash
-sudo systemctl enable cec2uinput
-sudo systemctl start cec2uinput
-```
+### Systemd
 
-3. Check service status:
 ```bash
-sudo systemctl status cec2uinput
-```
-
-4. View logs:
-```bash
+sudo cp config/cec2uinput.service /etc/systemd/system/cec2uinput.service
+sudo systemctl enable --now cec2uinput
 sudo journalctl -u cec2uinput -f
 ```
 
 ## Architecture
 
-The application consists of two main components:
-
-1. **CEC Event Handler** (`main.rs`):
-   - Initializes libcec connection
-   - Registers callback for CEC keypress events
-   - Maps CEC button codes to action names
-   - Filters duplicate key events
-
-2. **UInput Device** (`linux.rs`):
-   - Creates virtual input device using Linux uinput
-   - Translates action names to keyboard events
-   - Sends keyboard events to the system
+- `src/main.rs` — handles CEC connection (cec-rs), receives keypress callbacks and maps CEC codes to action names.
+- `src/linux.rs` — builds a uinput virtual device and translates action names to keyboard and mouse events. This file contains the mapping table for keyboard tokens and the mouse handling logic (exponential movement, click events).
 
 ## Troubleshooting
 
-### Common Issues
+- Permission errors: ensure the process can create / access the uinput device (run as root or give uinput access).
+- No CEC events: verify HDMI-CEC is enabled on the TV and that libcec detects the adapter (`cec-client -l`).
+- No keyboard/mouse events: check mappings in `config/config.yml` and watch the logs for messages about unknown actions.
+- Debug issues with increased logging: run with `-l debug` or `-l trace` for detailed diagnostic output.
 
-1. **Permission Denied**:
-   - Ensure you're running with root privileges
-   - Check that your user has access to `/dev/uinput`
+Debug commands:
 
-2. **CEC Device Not Found**:
-   - Verify HDMI-CEC is enabled on your TV/receiver
-   - Check that libcec can detect your CEC adapter
-   - Test with `cec-client` command
-
-3. **No Key Events**:
-   - Check the configuration file mappings
-   - Verify CEC events are being received (check logs)
-   - Ensure the target application can receive keyboard events
-
-### Common causes on Raspberry Pi CM5:
-
-- Missing libcec development packages (try: `sudo apt-get install libcec-dev`)
-- CEC hardware not properly detected - check `dmesg | grep cec`
-- Driver conflicts (try: `sudo modprobe cec` or check `/dev/cec*`)
-- Run `cec-client -l` to check available adapters
-- For CM5 dual HDMI, try specifying port: `RPI:0` or `RPI:1`
-- Ensure user has permission to access CEC device (add to `video` group)
-- Check if another process is using the CEC adapter
-- Make sure `hdmi_ignore_cec_init=1` is NOT set in `/boot/config.txt`
-- Try `sudo systemctl stop cec` if cec service is running
-- Verify physical address in config matches your HDMI setup
-- Check CEC topology with `cec-ctl --show-topology`
-
-### Debug Commands
-
-Test CEC functionality:
 ```bash
 # List CEC adapters
 cec-client -l
 
 # Monitor CEC events
 cec-client -d 8
-```
 
-Check virtual input device:
-```bash
-# List input devices
+# List input devices and look for the virtual device
 cat /proc/bus/input/devices | grep -A 5 cec2uinput
 
-# Monitor input events
+# Monitor events (choose appropriate device number)
 sudo evtest
 ```
 
 ## Development
 
-### Building
+Build and test with cargo:
 
 ```bash
 cargo build
-```
-
-### Testing
-
-```bash
 cargo test
 ```
 
-### Code Structure
+Code layout:
 
-- `src/main.rs` - Main application logic and CEC integration
-- `src/linux.rs` - Linux-specific uinput implementation
-- `config.yaml` - Runtime configuration
-- `cec2uinput.service` - SystemD service definition
+- `src/main.rs` — main application and CEC mapping table
+- `src/linux.rs` — uinput device implementation (keyboard and mouse handling)
+- `config/config.yml` — example configuration and mapping examples
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+Contributions are welcome — fork, branch, add tests, and open a PR.
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0. See `LICENSE`.
 
-## Acknowledgments
+## Acknowledgements
 
-- Built with [cec-rs](https://crates.io/crates/cec-rs) for CEC integration
-- Uses [uinput](https://crates.io/crates/uinput) for Linux input event generation
-- Powered by the [libcec](https://github.com/Pulse-Eight/libcec) library
+- Built with `cec-rs` for CEC integration
+- Uses `uinput` for Linux input event generation
+- Powered by `libcec` (Pulse-Eight)

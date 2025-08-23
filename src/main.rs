@@ -66,7 +66,8 @@ struct Args {
         short,
         long,
         value_name = "LEVEL",
-        help = "Log level: error, warn, info, debug, trace"
+        help = "Log level: error, warn, info, debug, trace",
+        value_parser = ["error", "warn", "info", "debug", "trace"]
     )]
     log_level: Option<String>,
 
@@ -123,6 +124,7 @@ fn init_logging(level: &str, quiet: bool) -> Result<()> {
         "warn" => log::LevelFilter::Warn,
         "error" => log::LevelFilter::Error,
         _ => {
+            // This should not happen due to value_parser, but keeping as fallback
             if !quiet {
                 eprintln!("Invalid log level '{}', using 'info' instead", level);
             }

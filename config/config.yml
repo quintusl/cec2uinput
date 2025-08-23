@@ -14,7 +14,11 @@ mappings:
   Left: "mount_left"           # CEC Left button -> Left arrow key
   Right: "mount_right"         # CEC Right button -> Right arrow key
   Select: "mouse_click_left"   # CEC Select button -> Enter key
-  Exit: "esc"                  # CEC Exit button -> Escape key
+  Exit: "alt+f4"               # CEC Exit button -> Alt + F4 key
+
+  # Movement uses exponential steps per repeated mapped event: [1, 10, 50, 100, 500] pixels.
+  # The step counter for each direction resets after 500 milliseconds of idle mouse activity.
+  #
 
   # Color Buttons
   F2Red: "f1"         # CEC Red button -> F1 key
@@ -37,9 +41,8 @@ mappings:
   # More examples:
   #
   # Modifier Sequences
-  #  Number0: "ctrl+alt+del"  # Press Ctrl and Alt, then Delete
-  #  Number1: "shift+tab"     # Press Shift, then Tab
-  #  Exit: "alt+f4"           # Press Alt, then F4
+  #  Number0: "ctrl+alt+del"  # Press Ctrl, Alt and Delete
+  #  Number1: "shift+tab"     # Press Shift and Tab
   #
   # Bracket Lists
   #  Number2: "ctrl+[a,b,c]"  # Press Ctrl, then A, B, C in sequence
@@ -49,21 +52,3 @@ mappings:
   #  Number4: "playpause"     # Simultaneously press Play and Pause
   #  Number5: "volumemute"    # Simultaneously press Volume Up and Volume Down
   #
-  # Mouse mappings (examples)
-  # Use the following mapping tokens to control a virtual mouse created by the bridge:
-  #   mouse_right  - move cursor right
-  #   mouse_left   - move cursor left
-  #   mouse_up     - move cursor up
-  #   mouse_down   - move cursor down
-  #   mouse_click_left  (aliases: mouse_left_click, mouse_lclick)  - left button click
-  #   mouse_click_right (aliases: mouse_right_click, mouse_rclick) - right button click
-  #
-  # Movement uses exponential steps per repeated mapped event: [1, 10, 50, 100, 500] pixels.
-  # The step counter for each direction resets after 500 milliseconds of idle mouse activity.
-  #
-  # Example mappings:
-  #  Right: "mouse_right"           # map CEC Right to mouse move right (press repeatedly to accelerate)
-  #  Left: "mouse_left"             # map CEC Left to mouse move left
-  #  Select: "mouse_click_left"     # map Select to left click
-  #
-  # You can add these under mappings to enable mouse behavior.
