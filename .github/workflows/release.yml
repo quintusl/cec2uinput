@@ -93,19 +93,19 @@ jobs:
           - target: x86_64-unknown-linux-gnu
             arch: amd64
             runner: ubuntu-24.04
-            rustflags: '-C target-feature=+crt-static -C link-arg=-ludev -C link-arg=-lcec'
-            # rustflags: '-C link-arg=-ludev -C link-arg=-lcec'
+            # rustflags: '-C target-feature=+crt-static -C link-arg=-ludev -C link-arg=-lcec'
+            rustflags: '-C link-arg=-ludev -C link-arg=-lcec'
           - target: aarch64-unknown-linux-gnu
             arch: arm64
             runner: ubuntu-24.04-arm
-            rustflags: '-C target-feature=+crt-static -C link-arg=-ludev -C link-arg=-lcec'
-            # rustflags: '-C link-arg=-ludev -C link-arg=-lcec'
+            # rustflags: '-C target-feature=+crt-static -C link-arg=-ludev -C link-arg=-lcec'
+            rustflags: '-C link-arg=-ludev -C link-arg=-lcec'
           - target: armv7-unknown-linux-gnueabihf
             arch: armhf
             runner: ubuntu-24.04-arm
             linker: 'arm-linux-gnueabihf-gcc'
-            rustflags: '-C target-feature=+crt-static -C linker=arm-linux-gnueabihf-gcc -C link-arg=-ludev -C link-arg=-lcec'
-            # rustflags: '-C linker=arm-linux-gnueabihf-gcc -C link-arg=-ludev -C link-arg=-lcec'
+            # rustflags: '-C target-feature=+crt-static -C linker=arm-linux-gnueabihf-gcc -C link-arg=-ludev -C link-arg=-lcec'
+            rustflags: '-C linker=arm-linux-gnueabihf-gcc -C link-arg=-ludev -C link-arg=-lcec'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
