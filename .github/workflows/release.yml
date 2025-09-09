@@ -131,6 +131,12 @@ jobs:
           rustup -q update
 
       - name: Build Debian package for ${{ matrix.arch }}
+        if: matrix.arch != 'armhf'
+        run: |
+          dpkg-buildpackage -b -d -uc -us --host-arch ${{ matrix.arch }} --build-profiles=release
+
+      - name: Build Debian package for armhf
+        if: matrix.arch == 'armhf'
         env:
           CARGO_BUILD_TARGET: ${{ matrix.target }}
           RUSTFLAGS: '${{ matrix.rustflags }}'
