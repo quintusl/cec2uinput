@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.3 - 2025-09-29
+
+### Commits
+
+- Initial release
+
+
+
 ## v0.2.2 - 2025-08-23
 
 ### Commits

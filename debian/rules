@@ -5,9 +5,9 @@
 
 override_dh_auto_build:
 ifdef CARGO_BUILD_TARGET
-	cargo build --release --target $(CARGO_BUILD_TARGET)
+	RUSTFLAGS="$(RUSTFLAGS)" cargo build --release --target $(CARGO_BUILD_TARGET)
 else
-	cargo build --release
+	RUSTFLAGS="$(RUSTFLAGS)" cargo build --release
 endif
 
 override_dh_auto_install:

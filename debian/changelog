@@ -1,3 +1,9 @@
+cec2uinput (0.2.3-1) unstable; urgency=medium
+
+  * Initial release
+
+ -- Quintus Leung <quintusl@gmail.com>  Mon, 29 Sep 2025 20:48:56 +0100
+
 cec2uinput (0.2.2-1) unstable; urgency=medium
 
   * Fix logging initialization.
