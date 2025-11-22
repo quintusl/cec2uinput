@@ -8,7 +8,7 @@ Homepage: https://github.com/quintusl/cec2uinput
 
 Package: cec2uinput
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, udev, libcec6, libudev1
+Depends: ${shlibs:Depends}, ${misc:Depends}, udev, libcec6 | libcec7, libudev1
 Recommends: systemd
 Suggests: cec-utils
 Description: CEC to uinput

@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.4 - 2025-11-22
+
+### Commits
+
+- Fix Debian builds. (70fcfe3)
+
+
+
 ## v0.2.3 - 2025-09-29
 
 ### Commits

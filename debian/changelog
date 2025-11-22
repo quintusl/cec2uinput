@@ -1,3 +1,9 @@
+cec2uinput (0.2.4-1) unstable; urgency=medium
+
+  * Fix Debian builds.
+
+ -- Quintus Leung <quintusl@gmail.com>  Sat, 22 Nov 2025 18:03:49 +0000
+
 cec2uinput (0.2.3-1) unstable; urgency=medium
 
   * Initial release
