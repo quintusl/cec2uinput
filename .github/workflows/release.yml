@@ -143,7 +143,11 @@ jobs:
         env:
           CARGO_BUILD_TARGET: ${{ matrix.target }}
           RUSTFLAGS: '${{ matrix.rustflags }}'
+          PKG_CONFIG_ALLOW_CROSS: 1
+          PKG_CONFIG_LIBDIR: '/usr/lib/arm-linux-gnueabihf/pkgconfig:/usr/share/pkgconfig'
         run: |
+          # Set specific PKG_CONFIG_LIBDIR for armhf to avoid picking up host libraries
+          export PKG_CONFIG_LIBDIR="/usr/lib/arm-linux-gnueabihf/pkgconfig:/usr/share/pkgconfig"
           dpkg-buildpackage -b -d -uc -us --host-arch ${{ matrix.arch }} --build-profiles=release
 
       - name: Get package name and path
